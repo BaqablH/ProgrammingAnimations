@@ -1,0 +1,7 @@
+files/**
+experiments/**
+
+**/Tex/**
+**/videos/**
+
+**/*.pyc
