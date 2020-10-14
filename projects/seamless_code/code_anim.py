@@ -1,4 +1,5 @@
 import html
+from html.parser import HTMLParser
 
 from manimlib.utils.config_ops import digest_config
 
@@ -65,7 +66,7 @@ class Code(VGroup):
         self.code_str = code_str if code_str else open(file_name, "r").read()
         
         self.style = self.style.lower()
-        self.html_string = self.hilite_me(self.code_str, self.style, self.highlight_options)
+        self.html_string = self.hilite_me()
 
         self.code = self.gen_colored_lines()
         self.background = self.highlight_lines()
@@ -83,6 +84,7 @@ class Code(VGroup):
                     stroke_width=self.stroke_width).scale(self.scale_factor)
 
     def gen_colored_lines(self):
+        self.gen_bad_code_json()
         self.gen_code_json()
 
         lines_text = [self.tab_spaces[line_no] * '\t' + 
@@ -118,19 +120,82 @@ class Code(VGroup):
            for line_no in range(self.code.__len__())
         ]
 
-    def hilite_me(self, code, style, options={}):
-        return highlight(self.code_str, get_lexer_by_name(self.language, **self.highlight_options), 
-                        HtmlFormatter(
-                                style=self.style,
-                                linenos=False,
-                                noclasses=True,
-                                cssclass='',
-                                cssstyles=self.hilite_divstyles + self.hilite_defstyles,
-                                prestyles='margin: 0'))
+    def hilite_me(self):
+        return highlight(
+                    self.code_str,
+                    get_lexer_by_name(self.language, **self.highlight_options), 
+                    HtmlFormatter(
+                            style=self.style,
+                            linenos=False,
+                            noclasses=True,
+                            cssclass='',
+                            cssstyles=self.hilite_divstyles + self.hilite_defstyles,
+                            prestyles='margin: 0'))
+
+    def gen_code_json(self):
+        class CodeHTMLParser(HTMLParser):
+            def __init__(self):
+                HTMLParser.__init__(self)
+                self.code_json = [[]]
+                self.default_format = {"color" : "#ffffff", "font-weight" : "normal"}
+                self.cur_format = self.default_format.copy()
+                self.html_ctr = 0
+
+            def handle_starttag(self, tag, attrs):
+                if tag in ['div', 'pre']:
+                    return
+                self.html_ctr += 1
+                assert(self.html_ctr == 1), "Too many counters"
+                assert(tag == 'span'), "Unexpected Tag {}".format(tag)
+                print("StartTag:", tag)
+                for key, val in attrs:
+                    assert(key == 'style'), "Unexpected Key {}".format(key)
+                    attr_data = val.split(';')
+                    assert(1 <= len(attr_data) <= 2), "Wrong number of args"
+                    for data in attr_data:
+                        assert(len(data.split(':')) == 2), "Wrong format"
+                        data_key, data_val = data.split(':')[0].strip(), data.split(':')[1].strip()
+                        self.cur_format[data_key] = data_val
+
+            def handle_data(self, data):
+                lines = data.splitlines()
+                for i in range(len(lines)):
+                    if i > 0:
+                        self.code_json.append([])
+                    new_info = self.cur_format.copy()
+                    new_info["text"] = lines[i]
+                    self.code_json[-1].append(new_info)
+
+            def handle_endtag(self, tag):
+                if tag in ['div', 'pre']:
+                    return
+                self.html_ctr -= 1
+                self.cur_format = self.default_format.copy()
+
+            def handle_startendtag(self, tag, attrs):
+                raise Exception("Unexpected StartEndTag {}".format(tag))
+            def handle_entityref(self, name):
+                raise Exception("Unexpected EntityRef {}".format(name))
+            def handle_charref(self, name):
+                raise Exception("Unexpected CharRef {}".format(name))
+            def handle_comment(self, data):
+                raise Exception("Unexpected Comment {}".format(data))
+            def handle_decl(self, decl):
+                raise Exception("Unexpected Decl {}".format(decl))
+            def handle_pi(self, data):
+                raise Exception("Unexpected PI {}".format(data))
+            def unknown_decl(self, data):
+                raise Exception("Unexpected UnknownDecl {}".format(data))
+
+        html_parser = CodeHTMLParser()
+        html_parser.feed(self.html_string)
+        print("GOOD SHIT:", html_parser.code_json)
+        html_parser.close()
 
     ## AIDS
 
-    def gen_code_json(self):
+    def gen_bad_code_json(self):
+        print("HTML_STRING: ", self.html_string)
         for i in range(3, -1, -1):
             self.html_string = self.html_string.replace("</" + " " * i, "</")
         for i in range(10, -1, -1):
@@ -177,7 +242,8 @@ class Code(VGroup):
             lines[line_index] = self.correct_non_span(lines[line_index])
             strb = lines[line_index].__str__
             print("B:", lines[line_index])
-            assert(stra == strb)
+            if (stra != strb) :
+                print("FAIL")
 
             words = lines[line_index].split("<span")
             for word_index in range(1, words.__len__()):
@@ -195,7 +261,7 @@ class Code(VGroup):
                 if text != "":
                     # print(text, "'" + color + "'")
                     self.code_json[code_json_line_index].append([text, color])
-        # print(self.code_json)
+        print("BAD CODE JSON: ", self.code_json)
 
     def correct_non_span(self, line_str):
         words = line_str.split("</span>")
@@ -228,14 +294,21 @@ class Code(VGroup):
 from manimlib.animation.creation import Write, ShowCreation
 from manimlib.scene.scene import Scene
 
+"""
+dict_keys(['default', 'emacs', 'friendly', 'colorful', 'autumn', 'murphy', 'manni', 'monokai', 'perldoc',
+'pastie', 'borland', 'trac', 'native', 'fruity', 'bw', 'vim', 'vs', 'tango', 'rrt', 'xcode', 'igor',
+'paraiso-light', 'paraiso-dark', 'lovelace', 'algol', 'algol_nu', 'arduino', 'rainbow_dash', 'abap',
+'solarized-dark', 'solarized-light', 'sas', 'stata', 'stata-light', 'stata-dark', 'inkpot'])
+"""
+
 class CodeAnim(Scene):
     def construct(self):
         arr = [1, 3, 4]
         print_line_numbers=True
-        code_py = Code('LaTeXExperiment/code_0.py', language='python', style='vim', highlight_color=YELLOW, lines_to_highlight=arr, background="window", insert_line_no=print_line_numbers).shift(UP)
+        code_py = Code('LaTeXExperiment/code_0.py', language='python', style='rainbow_dash', highlight_color=YELLOW, lines_to_highlight=arr, insert_line_no=print_line_numbers).shift(UP)
         self.add(code_py)
         self.wait(3.)
         print(code_py.html_string)
-        code_cpp = Code('LaTeXExperiment/code_0.cc', language='cpp', style='vim', highlight_color=YELLOW, lines_to_highlight=arr, background="window", insert_line_no=print_line_numbers).shift(0.5*DOWN)
+        code_cpp = Code('LaTeXExperiment/code_0.cc', language='cpp', style='rainbow_dash', highlight_color=YELLOW, lines_to_highlight=arr, insert_line_no=print_line_numbers).shift(0.5*DOWN)
         self.add(code_cpp)
         self.wait(3.)
