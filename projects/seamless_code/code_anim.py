@@ -36,7 +36,6 @@ class Code(VGroup):
         "tab_width": 3,
         "line_spacing": 0.1,
         "scale_factor": 0.5,
-        "run_time": 1,
         "font": 'Ubuntu Mono',
         'stroke_width': 0,
         'indentation_char': "  ",
@@ -68,8 +67,6 @@ class Code(VGroup):
         self.style = self.style.lower()
         self.html_string = self.hilite_me(self.code_str, self.style, self.highlight_options)
 
-        self.gen_code_json()
-
         self.code = self.gen_colored_lines()
         self.background = self.highlight_lines()
 
@@ -86,21 +83,26 @@ class Code(VGroup):
                     stroke_width=self.stroke_width).scale(self.scale_factor)
 
     def gen_colored_lines(self):
-        lines_text = []
-        for line_no in range(self.code_json.__len__()):
-            line_str = ""
-            for word_index in range(self.code_json[line_no].__len__()):
-                line_str = line_str + self.code_json[line_no][word_index][0]
-            lines_text.append(self.tab_spaces[line_no] * "\t" + line_str)
-        code = Paragraph(*[i for i in lines_text], line_spacing=self.line_spacing, tab_width=self.tab_width,
-                    alignment="left", font=self.font, stroke_width=self.stroke_width).scale(self.scale_factor)
+        self.gen_code_json()
+
+        lines_text = [self.tab_spaces[line_no] * '\t' + 
+                        "".join(self.code_json[line_no][word_index][0] for word_index in range(self.code_json[line_no].__len__()))
+                                for line_no in range(self.code_json.__len__())]
+
+        code = Paragraph(*lines_text,
+                        line_spacing=self.line_spacing,
+                        tab_width=self.tab_width,
+                        alignment="left",
+                        font=self.font,
+                        stroke_width=self.stroke_width).scale(self.scale_factor)
+
         for line_no in range(code.__len__()):
-            line = code[line_no]
-            line_char_index = self.tab_spaces[line_no]
+            cur_index = self.tab_spaces[line_no]
             for word_index in range(self.code_json[line_no].__len__()):
-                line[line_char_index:line_char_index + self.code_json[line_no][word_index][0].__len__()].set_color(
-                    self.code_json[line_no][word_index][1])
-                line_char_index += self.code_json[line_no][word_index][0].__len__()
+                cur_length = self.code_json[line_no][word_index][0].__len__()
+                code[line_no][cur_index:cur_index + cur_length].set_color(self.code_json[line_no][word_index][1])
+                cur_index += cur_length
+
         return code
 
     def highlight_lines(self):
@@ -115,6 +117,18 @@ class Code(VGroup):
             )
            for line_no in range(self.code.__len__())
         ]
+
+    def hilite_me(self, code, style, options={}):
+        return highlight(self.code_str, get_lexer_by_name(self.language, **self.highlight_options), 
+                        HtmlFormatter(
+                                style=self.style,
+                                linenos=False,
+                                noclasses=True,
+                                cssclass='',
+                                cssstyles=self.hilite_divstyles + self.hilite_defstyles,
+                                prestyles='margin: 0'))
+
+    ## AIDS
 
     def gen_code_json(self):
         for i in range(3, -1, -1):
@@ -211,22 +225,13 @@ class Code(VGroup):
         return line_str
 
 
-    def hilite_me(self, code, style, options={}):
-        return highlight(self.code_str, get_lexer_by_name(self.language, **self.highlight_options), 
-                        HtmlFormatter(style=self.style,
-                                linenos=False,
-                                noclasses=True,
-                                cssclass='',
-                                cssstyles=self.hilite_divstyles + self.hilite_defstyles,
-                                prestyles='margin: 0'))
-
 from manimlib.animation.creation import Write, ShowCreation
 from manimlib.scene.scene import Scene
 
 class CodeAnim(Scene):
     def construct(self):
         arr = [1, 3, 4]
-        print_line_numbers=False
+        print_line_numbers=True
         code_py = Code('LaTeXExperiment/code_0.py', language='python', style='vim', highlight_color=YELLOW, lines_to_highlight=arr, background="window", insert_line_no=print_line_numbers).shift(UP)
         self.add(code_py)
         self.wait(3.)
