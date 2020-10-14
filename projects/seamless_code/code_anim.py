@@ -1,39 +1,12 @@
-#!/usr/bin/env python
-
-from manimlib.animation.creation import Write, ShowCreation
-from manimlib.scene.scene import Scene
-
-"""
-from functools import reduce
-import operator as op
-import os
-from manimlib.constants import *
-from manimlib.mobject.geometry import Line
-from manimlib.mobject.svg.svg_mobject import SVGMobject
-from manimlib.mobject.svg.svg_mobject import VMobjectFromSVGPathstring
-from manimlib.mobject.types.vectorized_mobject import VGroup
-from manimlib.mobject.types.vectorized_mobject import VectorizedPoint
-from manimlib.utils.config_ops import digest_config
-from manimlib.utils.strings import split_string_list_to_isolate_substrings
-import manimlib.utils.tex_file_writing as TFW
-
-from manimlib.mobject.svg.tex_mobject import TexSymbol   
-
-from manimlib.animation.creation import Write, ShowCreation
-from manimlib.scene.scene import Scene
-
-from local_code_mobject import Code
-"""
-
 import html
+
+from manimlib.utils.config_ops import digest_config
+
 from manimlib.constants import *
-from manimlib.container.container import Container
-from manimlib.mobject.geometry import Rectangle, Dot, RoundedRectangle
 from manimlib.mobject.shape_matchers import SurroundingRectangle, BackgroundRectangle
 from manimlib.mobject.svg.text_mobject import Paragraph
 from manimlib.mobject.types.vectorized_mobject import VGroup
 from manimlib.mobject.types.vectorized_mobject import VMobject
-
 
 import re
 from pygments import highlight
@@ -72,73 +45,49 @@ class Code(VGroup):
         "line_no_buff": 0.4,
         'style': 'vim',
         'language': 'cpp', # TODO: MOVE
-        'generate_html_file': False,
         'default_text_color': WHITE,
         'lines_to_highlight': [],
         'highlight_color': GOLD,
         'highlight_opacity': 0.5,
         'highlight_buff': 0.025,
+        'highlight_options': {},
+        'hilite_divstyles': "border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;",
+        'hilite_defstyles': 'overflow:auto;width:auto;',
     }
 
-    def __init__(self, file_name=None, **kwargs):
-        Container.__init__(self, **kwargs)
-        self.file_name = file_name or self.file_name
-        self.ensure_valid_file()
+    def __init__(self, file_name=None, code_str=None, **kwargs):
+        digest_config(self, kwargs)
+        if code_str is None and file_name is None:
+            raise Exception("Both CodeString and FileName unset")
+        if code_str is not None and file_name is not None:
+            raise Exception("Both CodeString and FileName set")
+        
+        self.file_name = file_name
+        self.code_str = code_str if code_str else open(file_name, "r").read()
         
         self.style = self.style.lower()
-        self.gen_html_string()
+        self.html_string = self.hilite_me(self.code_str, self.style, self.highlight_options)
+
         self.gen_code_json()
 
         self.code = self.gen_colored_lines()
         self.background = self.highlight_lines()
-        print(self.background)
 
+        objs = [*self.code, *self.background]
         if self.insert_line_no:
-            self.line_numbers = self.gen_line_numbers()
-            self.line_numbers.next_to(self.code, direction=LEFT, buff=self.line_no_buff)
-            VGroup.__init__(self, self.line_numbers, *self.code, *self.background, **kwargs)
-        else:
-            VGroup.__init__(self, *self.code, *self.background, **kwargs)
-
-        self.move_to(np.array([0, 0, 0]))
-
-    def apply_points_function_about_point(self, func, about_point=None, about_edge=None):
-        if about_point is None:
-            if about_edge is None:
-                about_edge = self.get_corner(UP + LEFT)
-            about_point = self.get_critical_point(about_edge)
-        for mob in self.family_members_with_points():
-            mob.points -= about_point
-            mob.points = func(mob.points)
-            mob.points += about_point
-        return self
-
-    def ensure_valid_file(self):
-        if self.file_name is None:
-            raise Exception("Must specify file for Code")
-        possible_paths = [
-            os.path.join(os.path.join("assets", "codes"), self.file_name),
-            self.file_name,
-        ]
-        for path in possible_paths:
-            if os.path.exists(path):
-                self.file_path = path
-                return
-        raise IOError("No file matching %s in codes directory" %
-                      self.file_name)
+            objs = [self.gen_line_numbers().next_to(self.code, direction=LEFT, buff=self.line_no_buff)] + objs
+        VGroup.__init__(self, *objs, **kwargs)
 
     def gen_line_numbers(self):
-        line_numbers_array = []
-        for line_no in range(0, self.code_json.__len__()):
-            number = str(self.line_no_from + line_no)
-            line_numbers_array.append(number)
-        line_numbers = Paragraph(*[i for i in line_numbers_array], line_spacing=self.line_spacing,
-                            alignment="right", font=self.font, stroke_width=self.stroke_width).scale(self.scale_factor)
-        return line_numbers
+        return Paragraph(*[str(self.line_no_from + line_no) for line_no in range(self.code_json.__len__())],
+                    line_spacing=self.line_spacing,
+                    alignment="right",
+                    font=self.font,
+                    stroke_width=self.stroke_width).scale(self.scale_factor)
 
     def gen_colored_lines(self):
         lines_text = []
-        for line_no in range(0, self.code_json.__len__()):
+        for line_no in range(self.code_json.__len__()):
             line_str = ""
             for word_index in range(self.code_json[line_no].__len__()):
                 line_str = line_str + self.code_json[line_no][word_index][0]
@@ -167,21 +116,6 @@ class Code(VGroup):
            for line_no in range(self.code.__len__())
         ]
 
-    def gen_html_string(self):
-        file = open(self.file_path, "r")
-        code_str = file.read()
-        file.close()
-
-        self.html_string = self.hilite_me(code_str, {}, self.style, "border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;")
-        if self.insert_line_no:
-            self.html_string = self.insert_line_numbers(self.html_string)
-
-        if self.generate_html_file:
-            os.makedirs(os.path.join("assets", "codes", "generated_html_files"), exist_ok=True)
-            file = open(os.path.join("assets", "codes", "generated_html_files", self.file_name + ".html"), "w")
-            file.write(self.html_string)
-            file.close()
-
     def gen_code_json(self):
         for i in range(3, -1, -1):
             self.html_string = self.html_string.replace("</" + " " * i, "</")
@@ -189,11 +123,8 @@ class Code(VGroup):
             self.html_string = self.html_string.replace("</span>" + " " * i, " " * i + "</span>")
         self.html_string = self.html_string.replace("background-color:", "background:")
 
-        if self.insert_line_no:
-            start_point = self.html_string.find("</td><td><pre")
-            start_point = start_point + 9
-        else:
-            start_point = self.html_string.find("<pre")
+        start_point = self.html_string.find("<pre")
+
         self.html_string = self.html_string[start_point:]
         # print(self.html_string)
         lines = self.html_string.split("\n")
@@ -204,7 +135,7 @@ class Code(VGroup):
         self.code_json = []
         self.tab_spaces = []
         code_json_line_index = -1
-        for line_index in range(0, lines.__len__()):
+        for line_index in range(lines.__len__()):
             if lines[line_index].__len__() == 0:
                 continue
             # print(lines[line_index])
@@ -225,9 +156,15 @@ class Code(VGroup):
             while lines[line_index][indentation_char_count] == '\t':
                 indentation_char_count = indentation_char_count + 1
             self.tab_spaces.append(indentation_char_count)
-            # print(lines[line_index])
+
+            # TODO: REMOVE ALL OF THIS IF IT GIVES NO PROBLEMS
+            print("A:", lines[line_index])
+            stra = lines[line_index].__str__
             lines[line_index] = self.correct_non_span(lines[line_index])
-            # print(lines[line_index])
+            strb = lines[line_index].__str__
+            print("B:", lines[line_index])
+            assert(stra == strb)
+
             words = lines[line_index].split("<span")
             for word_index in range(1, words.__len__()):
                 color_index = words[word_index].find("color:")
@@ -249,14 +186,14 @@ class Code(VGroup):
     def correct_non_span(self, line_str):
         words = line_str.split("</span>")
         line_str = ""
-        for i in range(0, words.__len__()):
+        for i in range(words.__len__()):
             if i != words.__len__() - 1:
                 j = words[i].find("<span")
             else:
                 j = words[i].__len__()
             temp = ""
             starti = -1
-            for k in range(0, j):
+            for k in range(j):
                 if words[i][k] == "\t" and starti == -1:
                     continue
                 else:
@@ -274,42 +211,26 @@ class Code(VGroup):
         return line_str
 
 
-    def hilite_me(self, code, options, style, divstyles):
-        style = style or 'colorful'
-        defstyles = 'overflow:auto;width:auto;'
-
-        formatter = HtmlFormatter(style=style,
+    def hilite_me(self, code, style, options={}):
+        return highlight(self.code_str, get_lexer_by_name(self.language, **self.highlight_options), 
+                        HtmlFormatter(style=self.style,
                                 linenos=False,
                                 noclasses=True,
                                 cssclass='',
-                                cssstyles=defstyles + divstyles,
-                                prestyles='margin: 0')
-        html = highlight(code, get_lexer_by_name(self.language, **options), formatter)
-        return html
+                                cssstyles=self.hilite_divstyles + self.hilite_defstyles,
+                                prestyles='margin: 0'))
 
-    def insert_line_numbers(self, html):
-        match = re.search('(<pre[^>]*>)(.*)(</pre>)', html, re.DOTALL)
-        if not match: return html
-
-        pre_open = match.group(1)
-        pre = match.group(2)
-        pre_close = match.group(3)
-
-        html = html.replace(pre_close, '</pre></td></tr></table>')
-        numbers = range(1, pre.count('\n') + 1)
-        format = '%' + str(len(str(numbers[-1]))) + 'i'
-        lines = '\n'.join(format % i for i in numbers)
-        html = html.replace(pre_open, '<table><tr><td>' + pre_open + lines + '</pre></td><td>' + pre_open)
-        return html
-
+from manimlib.animation.creation import Write, ShowCreation
+from manimlib.scene.scene import Scene
 
 class CodeAnim(Scene):
     def construct(self):
         arr = [1, 3, 4]
-        code_py = Code('LaTeXExperiment/code_0.py', language='python', lines_to_highlight=arr, background="window").shift(UP)
+        print_line_numbers=False
+        code_py = Code('LaTeXExperiment/code_0.py', language='python', style='vim', highlight_color=YELLOW, lines_to_highlight=arr, background="window", insert_line_no=print_line_numbers).shift(UP)
         self.add(code_py)
         self.wait(3.)
         print(code_py.html_string)
-        code_cpp = Code('LaTeXExperiment/code_0.cc', language='cpp', lines_to_highlight=arr, background="window").shift(0.5*DOWN)
+        code_cpp = Code('LaTeXExperiment/code_0.cc', language='cpp', style='vim', highlight_color=YELLOW, lines_to_highlight=arr, background="window", insert_line_no=print_line_numbers).shift(0.5*DOWN)
         self.add(code_cpp)
         self.wait(3.)
