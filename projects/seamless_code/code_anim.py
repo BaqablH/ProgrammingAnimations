@@ -84,11 +84,9 @@ class Code(VGroup):
                     stroke_width=self.stroke_width).scale(self.scale_factor)
 
     def gen_colored_lines(self):
-        self.gen_bad_code_json()
         self.gen_code_json()
 
-        lines_text = [self.tab_spaces[line_no] * '\t' + 
-                        "".join(self.code_json[line_no][word_index][0] for word_index in range(self.code_json[line_no].__len__()))
+        lines_text = ["".join(self.code_json[line_no][word_index]["text"] for word_index in range(self.code_json[line_no].__len__()))
                                 for line_no in range(self.code_json.__len__())]
 
         code = Paragraph(*lines_text,
@@ -99,10 +97,11 @@ class Code(VGroup):
                         stroke_width=self.stroke_width).scale(self.scale_factor)
 
         for line_no in range(code.__len__()):
-            cur_index = self.tab_spaces[line_no]
+            cur_index = 0
             for word_index in range(self.code_json[line_no].__len__()):
-                cur_length = self.code_json[line_no][word_index][0].__len__()
-                code[line_no][cur_index:cur_index + cur_length].set_color(self.code_json[line_no][word_index][1])
+                cur_length = self.code_json[line_no][word_index]["text"].__len__()
+                code[line_no][cur_index:cur_index + cur_length].set_color(self.code_json[line_no][word_index]["color"])
+                code[line_no][cur_index:cur_index + cur_length].weight = self.code_json[line_no][word_index]["font-weight"].upper()
                 cur_index += cur_length
 
         return code
@@ -147,7 +146,6 @@ class Code(VGroup):
                 self.html_ctr += 1
                 assert(self.html_ctr == 1), "Too many counters"
                 assert(tag == 'span'), "Unexpected Tag {}".format(tag)
-                print("StartTag:", tag)
                 for key, val in attrs:
                     assert(key == 'style'), "Unexpected Key {}".format(key)
                     attr_data = val.split(';')
@@ -189,106 +187,9 @@ class Code(VGroup):
 
         html_parser = CodeHTMLParser()
         html_parser.feed(self.html_string)
-        print("GOOD SHIT:", html_parser.code_json)
+        self.code_json = html_parser.code_json
+        print("CODE JSON:", self.code_json)
         html_parser.close()
-
-    ## AIDS
-
-    def gen_bad_code_json(self):
-        print("HTML_STRING: ", self.html_string)
-        for i in range(3, -1, -1):
-            self.html_string = self.html_string.replace("</" + " " * i, "</")
-        for i in range(10, -1, -1):
-            self.html_string = self.html_string.replace("</span>" + " " * i, " " * i + "</span>")
-        self.html_string = self.html_string.replace("background-color:", "background:")
-
-        start_point = self.html_string.find("<pre")
-
-        self.html_string = self.html_string[start_point:]
-        # print(self.html_string)
-        lines = self.html_string.split("\n")
-        lines = lines[0:lines.__len__() - 2]
-        start_point = lines[0].find(">")
-        lines[0] = lines[0][start_point + 1:]
-        # print(lines)
-        self.code_json = []
-        self.tab_spaces = []
-        code_json_line_index = -1
-        for line_index in range(lines.__len__()):
-            if lines[line_index].__len__() == 0:
-                continue
-            # print(lines[line_index])
-            self.code_json.append([])
-            code_json_line_index = code_json_line_index + 1
-            if lines[line_index].startswith(self.indentation_char):
-                start_point = lines[line_index].find("<")
-                starting_string = lines[line_index][:start_point]
-                indentation_char_count = lines[line_index][:start_point].count(self.indentation_char)
-                if starting_string.__len__() != indentation_char_count * self.indentation_char.__len__():
-                    lines[line_index] = "\t" * indentation_char_count + starting_string[starting_string.rfind(
-                        self.indentation_char) + self.indentation_char.__len__():] + \
-                                        lines[line_index][start_point:]
-                else:
-                    lines[line_index] = "\t" * indentation_char_count + lines[line_index][start_point:]
-
-            indentation_char_count = 0
-            while lines[line_index][indentation_char_count] == '\t':
-                indentation_char_count = indentation_char_count + 1
-            self.tab_spaces.append(indentation_char_count)
-
-            # TODO: REMOVE ALL OF THIS IF IT GIVES NO PROBLEMS
-            print("A:", lines[line_index])
-            stra = lines[line_index].__str__
-            lines[line_index] = self.correct_non_span(lines[line_index])
-            strb = lines[line_index].__str__
-            print("B:", lines[line_index])
-            if (stra != strb) :
-                print("FAIL")
-
-            words = lines[line_index].split("<span")
-            for word_index in range(1, words.__len__()):
-                color_index = words[word_index].find("color:")
-                if color_index == -1:
-                    color = self.default_text_color
-                else:
-                    starti = words[word_index][color_index:].find("#")
-                    color = words[word_index][color_index + starti:color_index + starti + 7]
-
-                start_point = words[word_index].find(">")
-                end_point = words[word_index].find("</span>")
-                text = words[word_index][start_point + 1:end_point]
-                text = html.unescape(text)
-                if text != "":
-                    # print(text, "'" + color + "'")
-                    self.code_json[code_json_line_index].append([text, color])
-        print("BAD CODE JSON: ", self.code_json)
-
-    def correct_non_span(self, line_str):
-        words = line_str.split("</span>")
-        line_str = ""
-        for i in range(words.__len__()):
-            if i != words.__len__() - 1:
-                j = words[i].find("<span")
-            else:
-                j = words[i].__len__()
-            temp = ""
-            starti = -1
-            for k in range(j):
-                if words[i][k] == "\t" and starti == -1:
-                    continue
-                else:
-                    if starti == -1: starti = k
-                    temp = temp + words[i][k]
-            if temp != "":
-                if i != words.__len__() - 1:
-                    temp = '<span style="color:' + self.default_text_color + '">' + words[i][starti:j] + "</span>"
-                else:
-                    temp = '<span style="color:' + self.default_text_color + '">' + words[i][starti:j]
-                temp = temp + words[i][j:]
-                words[i] = temp
-            if words[i] != "":
-                line_str = line_str + words[i] + "</span>"
-        return line_str
 
 
 from manimlib.animation.creation import Write, ShowCreation
@@ -303,12 +204,12 @@ dict_keys(['default', 'emacs', 'friendly', 'colorful', 'autumn', 'murphy', 'mann
 
 class CodeAnim(Scene):
     def construct(self):
-        arr = [1, 3, 4]
+        arr = []
         print_line_numbers=True
         code_py = Code('LaTeXExperiment/code_0.py', language='python', style='rainbow_dash', highlight_color=YELLOW, lines_to_highlight=arr, insert_line_no=print_line_numbers).shift(UP)
         self.add(code_py)
         self.wait(3.)
         print(code_py.html_string)
-        code_cpp = Code('LaTeXExperiment/code_0.cc', language='cpp', style='rainbow_dash', highlight_color=YELLOW, lines_to_highlight=arr, insert_line_no=print_line_numbers).shift(0.5*DOWN)
+        code_cpp = Code('LaTeXExperiment/code_0.cc', language='cpp', style='rainbow_dash', highlight_color=YELLOW, lines_to_highlight=arr, insert_line_no=print_line_numbers).shift(DOWN)
         self.add(code_cpp)
         self.wait(3.)
