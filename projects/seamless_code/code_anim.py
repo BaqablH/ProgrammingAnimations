@@ -1,58 +1,32 @@
-import html
 from html.parser import HTMLParser
-
 from manimlib.utils.config_ops import digest_config
 
-from manimlib.constants import *
-from manimlib.mobject.shape_matchers import SurroundingRectangle, BackgroundRectangle
-from manimlib.mobject.svg.text_mobject import Paragraph
+import manimlib.constants as consts
+from manimlib.mobject.shape_matchers import SurroundingRectangle
+from manimlib.mobject.svg.text_mobject import Paragraph, TextWithFixHeight
 from manimlib.mobject.types.vectorized_mobject import VGroup
-from manimlib.mobject.types.vectorized_mobject import VMobject
+from manimlib.mobject.svg.svg_mobject import VMobjectFromSVGPathstring
 
-import re
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters.html import HtmlFormatter
 
-'''
-1) Code is VGroup() with three things
-    1.1) Code[0] is Code.background_mobject
-        which can be a 
-            1.1.1) Rectangle() if background == "rectangle" 
-            1.1.2) VGroup() of Rectangle() and Dot() for three buttons if background == "window" 
-    1.2) Code[1] is Code.line_numbers Which is a Paragraph() object, this mean you can use 
-                Code.line_numbers[0] or Code[1][0] to access first line number 
-    1.3) Code[2] is Code.code
-        1.3.1) Which is a Paragraph() with color highlighted, this mean you can use 
-            Code.code[1] or Code[2][1] 
-                line number 1
-            Code.code[1][0] or Code.code[1][0] 
-                first character of line number 1
-            Code.code[1][0:5] or Code.code[1][0:5] 
-                first five characters of line number 1
-'''
-
 class Code(VGroup):
     CONFIG = {
-        "tab_width": 3,
-        "line_spacing": 0.1,
-        "scale_factor": 0.5,
+        "tab_width": 2,
         "font": 'Ubuntu Mono',
-        'stroke_width': 0,
         'indentation_char': "  ",
-        'insert_line_no': False,
+        'show_line_numbers': False,
         'line_no_from': 1,
         "line_no_buff": 0.4,
         'style': 'vim',
         'language': 'cpp', # TODO: MOVE
-        'default_text_color': WHITE,
+        'default_text_color': consts.WHITE,
         'lines_to_highlight': [],
-        'highlight_color': GOLD,
+        'highlight_color': consts.GOLD,
         'highlight_opacity': 0.5,
         'highlight_buff': 0.025,
         'highlight_options': {},
-        'hilite_divstyles': "border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;",
-        'hilite_defstyles': 'overflow:auto;width:auto;',
     }
 
     def __init__(self, file_name=None, code_str=None, **kwargs):
@@ -63,46 +37,32 @@ class Code(VGroup):
             raise Exception("Both CodeString and FileName set")
         
         self.file_name = file_name
-        self.code_str = code_str if code_str else open(file_name, "r").read()
+        self.code_str = (code_str if code_str else open(file_name, "r").read()).replace('\t', ' '*self.tab_width)
         
-        self.style = self.style.lower()
-        self.html_string = self.hilite_me()
-
-        self.code = self.gen_colored_lines()
+        self.code = self.get_code()
         self.background = self.highlight_lines()
 
         objs = [*self.code, *self.background]
-        if self.insert_line_no:
-            objs = [self.gen_line_numbers().next_to(self.code, direction=LEFT, buff=self.line_no_buff)] + objs
+        if self.show_line_numbers:
+            objs = [self.gen_line_numbers().next_to(self.code, direction=consts.LEFT, buff=self.line_no_buff)] + objs
         VGroup.__init__(self, *objs, **kwargs)
 
     def gen_line_numbers(self):
-        return Paragraph(*[str(self.line_no_from + line_no) for line_no in range(self.code_json.__len__())],
-                    line_spacing=self.line_spacing,
-                    alignment="right",
-                    font=self.font,
-                    stroke_width=self.stroke_width).scale(self.scale_factor)
+        return Paragraph(*[str(self.line_no_from + line_no) for line_no in range(self.style_data.__len__())], alignment="right", font=self.font)
 
-    def gen_colored_lines(self):
-        self.gen_code_json()
+    def get_code(self):
+        self.style_data = self.gen_style_data()
 
-        lines_text = ["".join(self.code_json[line_no][word_index]["text"] for word_index in range(self.code_json[line_no].__len__()))
-                                for line_no in range(self.code_json.__len__())]
+        lines_text = ["".join(self.style_data[line_no][word_index]["text"] for word_index in range(self.style_data[line_no].__len__()))
+                                for line_no in range(self.style_data.__len__())]
 
-        code = Paragraph(*lines_text,
-                        line_spacing=self.line_spacing,
-                        tab_width=self.tab_width,
-                        alignment="left",
-                        font=self.font,
-                        stroke_width=self.stroke_width).scale(self.scale_factor)
+        code = Paragraph(*lines_text, alignment="left", font=self.font)
 
         for line_no in range(code.__len__()):
-            cur_index = 0
-            for word_index in range(self.code_json[line_no].__len__()):
-                cur_length = self.code_json[line_no][word_index]["text"].__len__()
-                code[line_no][cur_index:cur_index + cur_length].set_color(self.code_json[line_no][word_index]["color"])
-                code[line_no][cur_index:cur_index + cur_length].weight = self.code_json[line_no][word_index]["font-weight"].upper()
-                cur_index += cur_length
+            for char_index in range(self.style_data[line_no].__len__()):
+                code[line_no][char_index].set_color(self.style_data[line_no][char_index]["color"])
+                code[line_no][char_index].weight = self.style_data[line_no][char_index]["font-weight"].upper()
+                print(self.style_data[line_no][char_index]["font-weight"].upper())
 
         return code
 
@@ -113,29 +73,15 @@ class Code(VGroup):
                 buff=self.highlight_buff,
                 color=self.highlight_color,
                 fill_color=self.highlight_color,
-                stroke_width=0,
-                fill_opacity=(self.highlight_opacity if line_no + 1 in self.lines_to_highlight else 0.2)
-            )
-           for line_no in range(self.code.__len__())
-        ]
+                fill_opacity=(self.highlight_opacity if line_no + 1 in self.lines_to_highlight else 0.),
+                stroke_width=0
+            ) for line_no in range(self.code.__len__())] 
 
-    def hilite_me(self):
-        return highlight(
-                    self.code_str,
-                    get_lexer_by_name(self.language, **self.highlight_options), 
-                    HtmlFormatter(
-                            style=self.style,
-                            linenos=False,
-                            noclasses=True,
-                            cssclass='',
-                            cssstyles=self.hilite_divstyles + self.hilite_defstyles,
-                            prestyles='margin: 0'))
-
-    def gen_code_json(self):
+    def gen_style_data(self):
         class CodeHTMLParser(HTMLParser):
             def __init__(self):
                 HTMLParser.__init__(self)
-                self.code_json = [[]]
+                self.style_data = [[]]
                 self.default_format = {"color" : "#ffffff", "font-weight" : "normal"}
                 self.cur_format = self.default_format.copy()
                 self.html_ctr = 0
@@ -153,16 +99,18 @@ class Code(VGroup):
                     for data in attr_data:
                         assert(len(data.split(':')) == 2), "Wrong format"
                         data_key, data_val = data.split(':')[0].strip(), data.split(':')[1].strip()
+                        assert(data_key in ["color", "font-weight"]), "Unexpected DataKey"
                         self.cur_format[data_key] = data_val
 
             def handle_data(self, data):
                 lines = data.splitlines()
                 for i in range(len(lines)):
                     if i > 0:
-                        self.code_json.append([])
+                        self.style_data.append([])
                     new_info = self.cur_format.copy()
-                    new_info["text"] = lines[i]
-                    self.code_json[-1].append(new_info)
+                    for c in lines[i]:
+                        new_info["text"] = c
+                        self.style_data[-1].append(new_info.copy())
 
             def handle_endtag(self, tag):
                 if tag in ['div', 'pre']:
@@ -185,11 +133,17 @@ class Code(VGroup):
             def unknown_decl(self, data):
                 raise Exception("Unexpected UnknownDecl {}".format(data))
 
+        self.html_string = highlight(
+                self.code_str,
+                get_lexer_by_name(self.language, **self.highlight_options), 
+                HtmlFormatter(style=self.style.lower(), noclasses=True))
+
         html_parser = CodeHTMLParser()
         html_parser.feed(self.html_string)
-        self.code_json = html_parser.code_json
-        print("CODE JSON:", self.code_json)
         html_parser.close()
+        print("STYLE DATA:", html_parser.style_data)
+        self.style_data = html_parser.style_data
+        return self.style_data
 
 
 from manimlib.animation.creation import Write, ShowCreation
