@@ -157,7 +157,7 @@ class SingleStringTexMobject(SVGMobject):
         return self
 
 
-class CodeMobject(SingleStringTexMobject):
+class MyCodeMobject(SingleStringTexMobject):
     CONFIG = {
         "template_tex_file_body": TEMPLATE_TEXT_FILE_BODY,
         "alignment": "\\centering",
@@ -269,7 +269,7 @@ class CodeMobject(SingleStringTexMobject):
         )
 
 
-class CodeTest(Scene):
+class MyCodeMobjectTest(Scene):
     def construct(self):
         #[highlightlines={1,3-4}]
         s = """\\begin{minted}{python}
@@ -283,7 +283,7 @@ def dfs(y, x):
 """
 
         print(s)
-        title = CodeMobject(s)
+        title = MyCodeMobject(s)
         self.play(Write(title))
         self.wait()
 
@@ -307,3 +307,230 @@ class ImageTest(Scene):
         img = ImageMobject(file+'.png',invert=True)
         self.add(img)
         self.wait()
+
+
+from manimlib.mobject.svg.code_mobject import Code
+from manimlib.mobject.geometry import Dot
+
+
+class CodeTest(Scene):
+    def construct(self):
+        code_py = Code('LaTeXExperiment/code_0.py', language='python', insert_line_no=False, background='window').shift(UP)
+        self.add(code_py)
+        self.wait()
+        code_cpp = Code('LaTeXExperiment/code_0.cc', language='cpp', insert_line_no=False, background='window').shift(DOWN)
+        self.add(code_cpp)
+        self.wait()
+
+from manimlib.mobject.svg.code_mobject import insert_line_numbers
+from manimlib.container.container import Container
+from manimlib.mobject.svg.text_mobject import Paragraph
+
+import re
+import html
+
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters.html import HtmlFormatter
+
+import json
+"""
+    CONFIG = {
+        "tab_width": 3,
+        "line_spacing": 0.1,
+        "scale_factor": 0.5,
+        "run_time": 1,
+        "font": 'Monospac821 BT',
+        'stroke_width': 0,
+        'margin': 0.3,
+        'indentation_char': "  ",
+        "background": "rectangle",  # or window
+        "corner_radius": 0.2,
+        'insert_line_no': True,
+        'line_no_from': 1,
+        "line_no_buff": 0.4,
+        'style': 'vim',
+        'language': 'cpp',
+        'generate_html_file': False
+    }
+"""
+class MyCode(Code):
+    CONFIG = {
+        "font": 'Ubuntu Mono',
+        'indentation_char': "  ",
+        "background": None,
+        'insert_line_no': False,
+        'style': 'vim',
+        'language': 'cpp',
+        'generate_html_file': False,
+        'lines_to_highlight': []
+    }
+    def hilite_me(self, code, lexer, options, style, linenos, divstyles):
+        lexer = lexer or 'python'
+        style = style or 'colorful'
+        defstyles = 'overflow:auto;width:auto;'
+
+        print("EO: ", self.lines_to_highlight)
+
+        formatter = HtmlFormatter(style=style,
+                                linenos=False,
+                                noclasses=True,
+                                cssclass='',
+                                cssstyles=defstyles + divstyles,
+                                prestyles='margin: 0',
+                                hl_lines=self.lines_to_highlight)
+        html = highlight(code, get_lexer_by_name(lexer, **options), formatter)
+        if linenos:
+            html = insert_line_numbers(html)
+        html = "<!-- HTML generated using hilite.me -->" + html
+        print(html)
+        return html
+
+    def gen_html_string(self):
+        file = open(self.file_path, "r")
+        code_str = file.read()
+        file.close()
+        self.html_string = self.hilite_me(code_str, self.language, {}, self.style, self.insert_line_no,
+                                     "border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;")
+        if self.generate_html_file:
+            os.makedirs(os.path.join("assets", "codes", "generated_html_files"), exist_ok=True)
+            file = open(os.path.join("assets", "codes", "generated_html_files", self.file_name + ".html"), "w")
+            file.write(self.html_string)
+            file.close()
+
+    def gen_code_json(self):
+        if self.background_color == "#111111" or \
+                self.background_color == "#272822" or \
+                self.background_color == "#202020" or \
+                self.background_color == "#000000":
+            self.default_color = "#ffffff"
+        else:
+            self.default_color = "#000000"
+        for i in range(3, -1, -1):
+            self.html_string = self.html_string.replace("</" + " " * i, "</")
+        for i in range(10, -1, -1):
+            self.html_string = self.html_string.replace("</span>" + " " * i, " " * i + "</span>")
+        #self.html_string = self.html_string.replace("background-color:", "background:")
+
+        if self.insert_line_no:
+            start_point = self.html_string.find("</td><td><pre")
+            start_point = start_point + 9
+        else:
+            start_point = self.html_string.find("<pre")
+        self.html_string = self.html_string[start_point:]
+        # print(self.html_string)
+        lines = self.html_string.split("\n")
+        lines = lines[0:lines.__len__() - 2]
+        start_point = lines[0].find(">")
+        lines[0] = lines[0][start_point + 1:]
+        # print(lines)
+        self.code_json = []
+        self.tab_spaces = []
+        code_json_line_index = -1
+        for line_index in range(0, lines.__len__()):
+            if lines[line_index].__len__() == 0:
+                continue
+            # print(lines[line_index])
+            self.code_json.append([])
+            code_json_line_index = code_json_line_index + 1
+            if lines[line_index].startswith(self.indentation_char):
+                start_point = lines[line_index].find("<")
+                starting_string = lines[line_index][:start_point]
+                indentation_char_count = lines[line_index][:start_point].count(self.indentation_char)
+                if starting_string.__len__() != indentation_char_count * self.indentation_char.__len__():
+                    lines[line_index] = "\t" * indentation_char_count + starting_string[starting_string.rfind(
+                        self.indentation_char) + self.indentation_char.__len__():] + \
+                                        lines[line_index][start_point:]
+                else:
+                    lines[line_index] = "\t" * indentation_char_count + lines[line_index][start_point:]
+
+            indentation_char_count = 0
+            while lines[line_index][indentation_char_count] == '\t':
+                indentation_char_count = indentation_char_count + 1
+            self.tab_spaces.append(indentation_char_count)
+            # print(lines[line_index])
+            lines[line_index] = self.correct_non_span(lines[line_index])
+            # print(lines[line_index])
+            words = lines[line_index].split("<span")
+            for word_index in range(1, words.__len__()):
+                print("wi: ", line_index, word_index, words[word_index])
+                color_index = words[word_index].find("color:")
+                if color_index == -1:
+                    color = self.default_color
+                else:
+                    starti = words[word_index][color_index:].find("#")
+                    color = words[word_index][color_index + starti:color_index + starti + 7]
+
+                bg_color_index = words[word_index].find("background-color:")
+                if bg_color_index == -1:
+                    bg_color = None # self.default_bg_color?
+                else:
+                    starti = words[word_index][bg_color_index:].find("#")
+                    bg_color = words[word_index][bg_color_index + starti:bg_color_index + starti + 7]
+
+                print("cols: ", color, bg_color)
+                start_point = words[word_index].find(">")
+                end_point = words[word_index].find("</span>")
+                text = words[word_index][start_point + 1:end_point]
+                text = html.unescape(text)
+                if text != "":
+                    print(text, "'" + color + "'")
+                    self.code_json[code_json_line_index].append([text, color, bg_color])
+        print(self.code_json)
+
+    def gen_colored_lines(self):
+        lines_text = []
+        for line_no in range(0, self.code_json.__len__()):
+            line_str = ""
+            for word_index in range(self.code_json[line_no].__len__()):
+                line_str = line_str + self.code_json[line_no][word_index][0]
+            lines_text.append(self.tab_spaces[line_no] * "\t" + line_str)
+        code = Paragraph(*[i for i in lines_text], line_spacing=self.line_spacing, tab_width=self.tab_width,
+                    alignment="left", font=self.font, stroke_width=self.stroke_width).scale(self.scale_factor)
+
+        for line_no in range(code.__len__()):
+            line = code[line_no]
+            line_char_index = self.tab_spaces[line_no]
+            if (line_no in self.lines_to_highlight):
+                line.set_fill(BLUE).set_opacity(1.)
+            for word_index in range(self.code_json[line_no].__len__()):
+                #print("A1", line, line_char_index, line[line_char_index:line_char_index + self.code_json[line_no][word_index][0].__len__()])
+                #print("A2", self.code_json[line_no][word_index])
+                line[line_char_index:line_char_index + self.code_json[line_no][word_index][0].__len__()].set_color(
+                    self.code_json[line_no][word_index][1])
+
+                line_char_index += self.code_json[line_no][word_index][0].__len__()
+        return code
+
+
+    def __init__(self, file_name=None, **kwargs):
+        Container.__init__(self, **kwargs)
+        self.file_name = file_name or self.file_name
+        self.ensure_valid_file()
+        self.style = self.style.lower()
+        self.gen_html_string()
+        self.background_color = None
+        self.gen_code_json()
+
+        self.code = self.gen_colored_lines()
+        print(self.code)
+        if self.insert_line_no:
+            self.line_numbers = self.gen_line_numbers()
+            self.line_numbers.next_to(self.code, direction=LEFT, buff=self.line_no_buff)
+
+        if self.insert_line_no:
+            VGroup.__init__(self, self.line_numbers, *self.code, **kwargs)
+        else:
+            VGroup.__init__(self, *self.code, **kwargs) # Delete Dot
+        self.move_to(np.array([0, 0, 0]))
+
+class MyCodeTest(Scene):
+    def construct(self):
+        arr = [1, 3, 4]
+        code_py = MyCode('LaTeXExperiment/code_0.py', language='python', lines_to_highlight=arr).shift(UP)
+        self.add(code_py)
+        self.wait(3.)
+        print(code_py.html_string)
+        code_cpp = MyCode('LaTeXExperiment/code_0.cc', language='cpp', lines_to_highlight=arr).shift(0.5*DOWN)
+        self.add(code_cpp)
+        self.wait(3.)
