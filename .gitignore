@@ -5,3 +5,7 @@ experiments/**
 **/videos/**
 
 **/*.pyc
+
+projects/*/media
+projects/*/*.svg
+projects/.vscode
