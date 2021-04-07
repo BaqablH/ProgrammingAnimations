@@ -103,7 +103,7 @@ class Code(VGroup):
         'style': 'vim',
         'language': 'cpp', # TODO: MOVE
         'default_text_color': consts.WHITE,
-        'lines_to_highlight': [],
+        'highlight_settings': {},
         'highlight_color': consts.GOLD,
         'highlight_opacity': 0.5,
         'highlight_buff': 0.025,
@@ -121,7 +121,7 @@ class Code(VGroup):
         self.code_str = (code_str if code_str else open(file_name, "r").read()).replace('\t', ' '*self.tab_width)
         
         self.code = self.get_codetext()
-        self.background = self.highlight_lines()
+        self.highlight_lines(self.highlight_settings)
 
         objs = [self.code, *self.background]
         if self.show_line_numbers:
@@ -135,17 +135,22 @@ class Code(VGroup):
         self.text_settings = self.gen_text_settings()
         return CodeText(self.text_settings, alignment="left", font=self.font)
 
-    def highlight_lines(self):
+    def get_highlited_lines(self, highlight_settings):
         return [
             SurroundingRectangle(
                 self.code[line_no],
                 buff=self.highlight_buff,
-                color=self.highlight_color,
-                fill_color=self.highlight_color,
-                fill_opacity=(self.highlight_opacity if line_no + 1 in self.lines_to_highlight else 0.),
+                color=(highlight_settings[line_no + 1] if line_no + 1 in highlight_settings else self.highlight_color),
+                fill_color=(highlight_settings[line_no + 1] if line_no + 1 in highlight_settings else self.highlight_color),
+                fill_opacity=(self.highlight_opacity if line_no + 1 in highlight_settings else 0.),
                 stroke_width=0
-            ) for line_no in range(self.code.__len__())] 
+            ) for line_no in range(self.code.__len__())]
 
+    def highlight_lines(self, highlight_settings):
+        self.highlight_settings = highlight_settings
+        self.background = self.get_highlited_lines(highlight_settings)
+        return self.background
+ 
     def gen_text_settings(self):
         class CodeHTMLParser(HTMLParser):
             def __init__(self):
@@ -228,14 +233,14 @@ dict_keys(['default', 'emacs', 'friendly', 'colorful', 'autumn', 'murphy', 'mann
 
 class CodeAnim(Scene):
     def construct(self):
-        arr = [1, 3, 4]
+        highlight_settings = {1: consts.RED, 3: consts.YELLOW, 4: consts.GREEN}
         print_line_numbers=False
         code_py = Code('LaTeXExperiment/code_0.py', language='python', style='rainbow_dash',highlight_color=consts.YELLOW,
-                                lines_to_highlight=arr, show_line_numbers=print_line_numbers).shift(consts.UP)
+                                highlight_settings=highlight_settings, show_line_numbers=print_line_numbers).shift(consts.UP)
         self.add(code_py)
         self.wait(3.)
         print(code_py.html_string)
         code_cpp = Code('LaTeXExperiment/code_0.cc', language='cpp', style='rainbow_dash', highlight_color=consts.YELLOW,
-                                lines_to_highlight=arr, show_line_numbers=print_line_numbers).shift(consts.DOWN)
+                                highlight_settings=highlight_settings, show_line_numbers=print_line_numbers).shift(consts.DOWN)
         self.add(code_cpp)
         self.wait(3.)
