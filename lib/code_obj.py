@@ -228,27 +228,10 @@ class Code(VGroup):
         self.text_settings = html_parser.text_settings
         return self.text_settings
 
-
-from manimlib.animation.creation import Write, ShowCreation
-from manimlib.scene.scene import Scene
-
 """
+Code Styles:
 dict_keys(['default', 'emacs', 'friendly', 'colorful', 'autumn', 'murphy', 'manni', 'monokai', 'perldoc',
 'pastie', 'borland', 'trac', 'native', 'fruity', 'bw', 'vim', 'vs', 'tango', 'rrt', 'xcode', 'igor',
 'paraiso-light', 'paraiso-dark', 'lovelace', 'algol', 'algol_nu', 'arduino', 'rainbow_dash', 'abap',
 'solarized-dark', 'solarized-light', 'sas', 'stata', 'stata-light', 'stata-dark', 'inkpot'])
 """
-
-class CodeAnim(Scene):
-    def construct(self):
-        highlight_settings = {1: consts.RED, 3: consts.YELLOW, 4: consts.GREEN}
-        print_line_numbers=False
-        code_py = Code('LaTeXExperiment/code_0.py', language='python', style='rainbow_dash',highlight_color=consts.YELLOW,
-                                highlight_settings=highlight_settings, show_line_numbers=print_line_numbers).shift(consts.UP)
-        self.add(code_py)
-        self.wait(3.)
-        print(code_py.html_string)
-        code_cpp = Code('LaTeXExperiment/code_0.cc', language='cpp', style='rainbow_dash', highlight_color=consts.YELLOW,
-                                highlight_settings=highlight_settings, show_line_numbers=print_line_numbers).shift(consts.DOWN)
-        self.add(code_cpp)
-        self.wait(3.)
