@@ -1,0 +1,270 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{verbatim}
+
+%\renewcommand{\v}[1]{\verb|#1|}
+
+\author{ProgrammingAnimations}
+\title{DFS Script}
+\date{}
+
+\begin{document}
+\maketitle
+
+%\section{Video 0. Introduction to graphs}
+%\subsection{Walktrough of the series}
+%\subsection{Graphs}
+%\subsubsection{Definition}
+%\subsubsection{Examples/Types of graphs}
+%\subsection{Transversals}
+
+\section{Video 1. DFS}
+
+\subsection{Intro/Motivation}
+
+So here's a problem for you.
+Imagine you wake up and you find yourself trapped inside of a maze.
+If this doesn't sound already like a nightmare,
+you don't even know if the maze has an 
+exit, but if there is one, you'd better find and you'd better
+find it quick.
+
+So, since you don't know exactly where
+you are, you want to explore the maze in such a way
+that you make sure that you explore the entire maze,
+since an exit could be anywhere, but you don't want to
+do unnecessary work. So, we are not looking for a shortest
+path, we will leave that problem for the next video,
+but we want to explore the whole maze without
+wasting any time. Is there a way, or more
+precisely, is there an algorithm that allows you to move
+through the maze in such a way while making sure that
+you will eventually have explored the entire maze?
+Let me introduce you to the depth-first search algorithm,
+or more commonly named just DFS.
+
+\subsection{Main idea}
+
+Let's try to model the maze in some meaningful way.
+We will represent the maze as a rectangular grid.
+The dark green squares will represent the bushes,
+or more generally, the forbidden positions of the maze. By
+forbidden here we just mean that we cannot walk across
+such squares. The rest of the squares will represent
+the part of the maze along which we can walk.
+Finally, we will represent in blue our starting 
+position, and in yellow the exits. In this case, we will
+only have one.
+
+Now remember what we want here. We want a algorithm that makes
+sure that we move through the entire grid, that at the same time
+avoids repeating moves that we have already done.
+
+So, here's the main idea of this algorithm. If we can make sure
+that, for every square of the maze
+that we explore, we will also explore all its 
+reachable adjacent squares at some point,
+just by starting in some initial position,
+that will ensure that we will eventually explore all squares
+in the maze that we can go to starting from that initial position.
+
+Before we see why, let's point out that in this context we will
+say that two squares are adjacent if they completely share
+a side. For example, for this particular square, those are 
+its adjacenct squares. 
+
+So, let's see why this idea works.
+Let's say that we start exploring at this particular square.
+Then, the algorithm will ensure that we also explore its adjacent
+squares. Then, the squares adjacent to those, and so on.
+
+Note that the squares that we didn't mark here are not reachable,
+since we said that to be adjacent, squares must completely share
+a side, and as you see, none of the unmarked squares 
+completely share a side with
+any of the marked ones.
+
+By the way, what we marked here forms what is called
+a connected component, that is, a maximal
+set of squares such that you can go from any of these to any other.
+Maximal here just means that you cannot find a larger set
+of squares containing it that still satisfies this property.
+As you can see, for example, this graph has two connected components.
+
+As a final note on the idea, take in account that we
+are not talking yet about the order in which we will
+explore the squares, we doing this just to show
+that our idea will ensure that we visit the entire
+connected component. Having said this, we are ready to see how
+to code this algorithm.
+
+\subsection{Code}
+
+Let's see how to code this. However, just a small caveat
+first. When we talk about matrices, which we use to represent
+grids such as this one that we are using to model the maze,
+we represent each element, or in our case, each square,
+with two indices. The first one, represents the row.
+As this is the vertical component, we will denote it
+with a \verb|y|. The uppermost row will be row 0, the next row
+will be row 1, and so on. As you can see, contrary to what is
+usual, increasing \verb|y| will be the same as moving downwards.
+Then, the second index, will denote the column, and we will
+denote in with an \verb|x|. In this case, the first
+column will be column 0, the next one column 1, and so on.
+This means that we will use \verb|y|'s before \verb|x|'s,
+which is the opposite order as you may be used to, but hey,
+there's a good reason for that.
+
+Having said that, we are ready for the code!
+For this video at least,
+I will not assume you have any previous knowledge on programming,
+so I will try my best to explain what is going on here.
+If you know some programming, and you are not used with C++,
+which is the language I will use here, don't worry,
+you will find this very easy to translate to your favourite
+language.
+
+Our code will only consist on a this function \verb|explore|,
+which will try to explore a single square. Therefore
+the only parameter that this function needs is the position,
+which we will pass that as two integers, 
+\verb|y| the row, and \verb|x|, the column.
+
+Now, let's tackle the first thing that we want for our
+algorithm, which is that we don't want to do redundant effort.
+For that, we will add these three lines. Let's explain them.
+
+First of all, what is this \verb|is_explorable| thing?
+This will be a matrix with the same dimensions as the grid, and
+so each element will represent the corresponding square of the
+grid. Each element will be a boolean, that is, a true or a false
+value, to indicate if the square is explorable or not.
+
+To be explorable, a square must satisfy two conditions.
+First, it must be a walkable square. So, squares representing
+bushes are not explorable. And second condition and probably
+the most important, to be explorable, the square cannot
+have been explored it yet.
+
+So, at the beginning, we will say that all forbidden squares,
+the ones representing the bushes, are not explorable,
+whereas all the other squares will be, but each time
+we explore a square, we mark it as non explorable.
+
+So, this will be the our first line of code. Every time
+we explore a square, we will immediately mark it as not explorable
+so that we never come back here.
+
+Now, we will try to explore the adjacent squares.
+So, we will do the following. If the square at the right is
+explorable, explore it recursively. If you don't know what 
+`recursively' means, don't worry and wait till you see the
+algorithm in action. Then, if the square right above
+is explorable, explorable, explore it. Do the same for the
+one on the left, and finally repeat for the one right below.
+
+As these lines follow an identical structure, we can,
+an a good programmer would say we must,
+put them in a \verb|for| loop. However, for some extra clarity
+in case you don't know C++ I will write this loop this way.
+
+This \verb|for| loop will mean that we will repeat the last two
+lines
+of code 4 times, the first time the variable \verb|i| will have
+a value of 0, the second time it will have a value of 1,
+the third time, a value of 2 and in the 
+fourth and last iteration it will have a value of 3.
+In case you are not familiar with programming, bear in mind
+that we always start counting from 0 \footnote{TODO: Attack
+MATLAB `programmers'}
+
+So, what will \verb|dy| and \verb|dx| mean here.
+This will be two small arrays to indicate directions.
+So, when for example \verb|i| is 0, substituting
+the first values of \verb|dy| and \verb|dx| we will get
+\verb|explore(y, x + 1)|, that is, we will explore
+the position at the right, or east, of our square.
+If you do the same for the other \verb|i|'s, you will realize
+that we will explore east, north, west, and south, in this order.
+
+This naming of variables is quite typical
+in this sort of context, and is obviously borrowed from math,
+although of course they are not used to talk about differential
+displacements, as its usual in the field,
+but about minimal displacements.
+
+So here we are! This is a basic scheme of a depth-first
+search algorithm. However, for our case, we will one extra thing
+on top of this basic scheme, which is keeping track of whether
+we found an exit. So, we will
+use this variable \verb|is_exit|, which again will be a matrix
+of booleans with the same dimension as the grid, just as the
+varaible we named \verb|explorable|, which for each square
+will tell whether it is an exit, and we will use this other
+boolean \verb|found_exit| which will keep track whether we found
+an exit. As we can see, we will initialize it as \verb|false|,
+and if we find an exit, when we do, we will set it to
+\verb|true|.
+
+Finally, since we are happy to find just an exit, these last two
+lines will stop any exploration once we have found
+an exit. Again, if you are not familiar with programming,
+return just means stop the function and go back to whatever
+you were doing when you called it.
+
+And a last small thing, let's add some comments to make
+everything even clearer, and let's get rid of these
+helper variables, although bear in mind that they will
+still be there in the background.
+
+So let's recap what this code is doing. We first have this
+little line that ensures that we don't do redundant work,
+we have this \verb|for| loop, that tries to explore
+every explorable adjacenct square,
+and we have this four lines, that will ensure that we stop
+once we have found an exit.
+
+\subsection{Animation}
+
+\subsection{Observations}
+
+\subsection{The stack of DFS}
+
+\subsection{Stacks}
+
+\subsection{Implementing DFS with a stack}
+
+\section{Video 2. BFS}
+
+\subsection{Stacks and queues}
+
+\subsection{Explain Code}
+
+\subsection{Animation}
+
+\subsection{Observations}
+
+\section{Video 3. Dijkstra}
+
+\subsection{Generalizing DFS and BFS to all Graphs}
+
+\subsection{Weighted graphs}
+
+\subsection{Priority Queues}
+
+\subsection{Explain Code}
+
+\subsection{Animation}
+
+\subsection{Observations}
+
+\subsection{Conclusions}
+
+
+\end{document}
