@@ -10,3 +10,4 @@ experiments/**
 projects/*/media
 projects/*/*.svg
 projects/.vscode
+projects/*/recordings
