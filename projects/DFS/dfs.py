@@ -190,8 +190,8 @@ class DFSScene(MODE.SceneType, Context):
     self.dfs(y + self.dy[i], x + self.dx[i])
     self.highlight_lines()
 
-  dy = [-1, 0, 1, 0]
-  dx = [0, 1, 0, -1]
+  dy = [0, 1, 0, -1]
+  dx = [1, 0, -1, 0]
   INITIAL_POS = [1, 1]
 
   def dfs(self, y, x):
