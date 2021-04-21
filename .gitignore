@@ -11,3 +11,9 @@ projects/*/media
 projects/*/*.svg
 projects/.vscode
 projects/*/recordings
+projects/*/script/*.aux
+projects/*/script/*.fdb_latexmk
+projects/*/script/*.fls
+projects/*/script/*.log
+projects/*/script/*.pdf
+projects/*/script/*.synctex.gz
