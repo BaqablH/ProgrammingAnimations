@@ -116,6 +116,13 @@ class Code(VGroup):
             raise Exception("Both CodeString and FileName unset")
         if code_str is not None and file_name is not None:
             raise Exception("Both CodeString and FileName set")
+
+        if file_name is not None:
+            extension = file_name.split('.')[-1]
+            if extension in ['cc', 'cpp']:
+                self.language = 'cpp'
+            if extension == 'py':
+                self.language = 'python'
         
         self.file_name = file_name
         self.code_str = (code_str if code_str else open(file_name, "r").read()).replace('\t', ' '*self.tab_width)
@@ -156,7 +163,7 @@ class Code(VGroup):
             def __init__(self):
                 HTMLParser.__init__(self)
                 self.text_settings = [[]]
-                self.default_format = {"color" : "#FFFFFF", "weight" : "NORMAL"}
+                self.default_format = {"color" : "#FFFFFF", "weight" : "NORMAL", "slant" : "NORMAL"}
                 self.cur_format = self.default_format.copy()
                 self.html_ctr = 0
 
@@ -173,7 +180,7 @@ class Code(VGroup):
                     for data in attr_data:
                         assert(len(data.split(':')) == 2), "Wrong format"
                         data_key, data_val = data.split(':')[0].strip(), data.split(':')[1].strip()
-                        assert(data_key in ["color", "weight"]), "Unexpected DataKey"
+                        assert(data_key in ["color", "weight", "slant"]), "Unexpected DataKey {}".format(data_key)
                         self.cur_format[data_key] = data_val.upper()
 
             def handle_data(self, data):
@@ -213,6 +220,7 @@ class Code(VGroup):
                 HtmlFormatter(style=self.style.lower(), noclasses=True))
 
         self.html_string = self.html_string.replace("font-weight", "weight")
+        self.html_string = self.html_string.replace("font-style", "slant")
 
         html_parser = CodeHTMLParser()
         html_parser.feed(self.html_string)
