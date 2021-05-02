@@ -232,6 +232,87 @@ once we have found an exit.
 
 \subsection{Animation}
 
+Now, let's run the animation!
+
+(initial square $(2, 4)$). So, we will start in our
+initial square. So, we start marking the square as not
+explorable, and now, let's start exploring around!
+What our algorithm does is first, let's explore east.
+The square at the left is not explorable, since it is an obstacle,
+so we try exploring north. Now our square is explorable!. So,
+let's recursively explore there.
+
+$(1, 4)$. We are now in this new square,
+which as always we will first mark as no longer explorable.
+Now, we will be able to move recursively to the left,
+and one more time. And remember, at each new exploration we
+mark the corresponding square as not explorable.
+
+$(1, 6)$. Now, look what happens at this square. We start
+trying to explore east, we fail since it is an obstacle,
+we try going north, same thing happens, and now, here's
+the interesting part. The square at the east is not an obstacle,
+but in the previous step we marked it as unexplorable. So,
+we can't go there, and we can only advance south.
+
+$(4, 6)$. Let's fast-forward a little bit, and we see that we
+can take two paths. But remember in which order we try to explore.
+The square east is already explored, the square north is an
+obstacle, and the square west is explorable, so we will
+first go there.
+
+$(4, 4)$. Now, we get at this square. Our algorithm will tell
+us to start exploring north.
+
+$(3, 4)$. But look what we have in this square. Each adjacent
+square is not explorable, either because is an obstacle or
+has already been explored. This means we cannot go move anywhere.
+In this case, the function will just end and we will resume
+in the previous step from the state that we left.
+Note that we have not completed exploring any of the squares
+with arrows. The exploration process on all those squares are
+frozen until we finish exploring the squares that we started
+exploring later in time.
+
+$(4, 4)$. So, we are again in this square. We had already tried
+exploring right and up, so we try left, we fail, and then move
+down.
+
+$(5, 2)$. Now, at this point, we have another intersection,
+and we start moving north.
+
+$(1, 3)$. Here's a dead end, and just as before, the algorithm
+will stop exploring the squares and stepping back.
+Remember, we can't move diagonally.
+
+$(5, 2)$. And now, we will move right into the exit!
+
+(exit $(7, 0)$). We are at the exit now. However, I lied a
+little bit to you. These four lines just do the process of
+exploring the maze, but nothing else.
+
+If we leave the code like this, the algorithm will not stop,
+since we did not tell it to do anything if it explores an
+exit. Even worse, the algorithm will crash, since it will
+try to explore a the square left, which does not 
+exist since it is out of the maze
+
+We may want to do something like this,
+where we say: if the square is an exit, mark that we have found
+an exit, and if we have found an exit, just return,
+%TODO: copypaste
+
+If we don't want the algorithm to stop, we will need
+to make a small modification in the code. Instead of
+checking that the square is explorable,
+we will check first that it is explorable,
+and then that it is inside of the maze, which we can do using
+a function like this.
+
+Try to deduce what will the algorithm do in this case. You
+can check if you are right by looking at the plain animation that
+I will leave in the description.
+
 \subsection{Observations}
 
 \subsection{The stack of DFS}
