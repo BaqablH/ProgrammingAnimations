@@ -55,7 +55,7 @@ class DFSSquare(MODE.BaseDFSSquareClass):
     if MODE.BaseDFSSquareClass == Prism:
       MODE.BaseDFSSquareClass.__init__(self, dimensions=self.get_prism_dimensions(side, c), **kwargs)
     else:
-      MODE.BaseDFSSquareClass.__init__(self, side_length=side, **kwargs)
+      MODE.BaseDFSSquareClass.__init__(self, side_length=side, stroke_width=2, **kwargs)
 
     self.pos = [y, x]
     self.ctr = None
@@ -205,22 +205,28 @@ class CommonScene(Scene, Context):
     self.add(*self.code.highlight_lines(lines))
     self.wait(run_time)
 
+class NewCanvas(Rectangle):
+  def __init__(self, **kwargs):
+      super().__init__(width=16, height=10, **kwargs)
+      self.set_opacity(1.).set_color(BLACK).set_fill(BLACK)
+
 class MainIdea(CommonScene):
   def animate_maze_construction(self):
-    self.start_animation(run_time=2.)
-    self.wait(2.)
+    self.start_animation(run_time=3.)
+    self.wait(16.)
     self.mark_init_squares()
     self.wait(2.)
     self.mark_exit_squares()
     self.wait(2.)
 
   def animate_adjacency_example(self):
+    self.wait(9.)
     self.select_square(*EXAMPLE_POS)
-    self.wait(2.)
+    self.wait(1.)
     self.show_adjacent_squares(*EXAMPLE_POS)
-    self.wait(2.)
+    self.wait(3.)
     self.reset_adjacency_highlighting()
-    self.wait(2.)
+    self.wait(1.)
     self.show_reachable_adjacent_squares(*EXAMPLE_POS)
     self.wait(2.)
     self.reset_full_highlighting()
@@ -233,18 +239,70 @@ class MainIdea(CommonScene):
       dist_list += list(filter(lambda x : x is not None, row))
     max_dist = max(*dist_list)
 
+    self.wait(5.)
+    waits = [8., 3., 2., 2.]
     for dist in range(max_dist + 1):
       self.highlight_distance(dist, distance_matrix)
-      self.wait(2.)
+      wait_time = waits[dist] if dist < len(waits) else 1.
+      self.wait(wait_time)
 
-    self.reset_full_highlighting()
+  def show_text1(self):
+    canv = NewCanvas()
+    self.add(canv)
+    self.wait(4.5)
+    o1 = TextMobject("1. Visits every reachable square")
+    o2 = TextMobject("2. Avoids revisiting squares")
+    text = VGroup(o1, o2).arrange(DOWN)
+    self.add(o1)
+    self.wait(4.5)
+    self.add(o2)
+    self.wait(10.)
+    self.remove(canv, o1, o2)
+
+  def show_text2(self):
+    canv = NewCanvas()
+    self.add(canv)
+    self.wait(8.)
+    o1 = TextMobject("Exploring a square implies exploring its neighbours").scale(0.8)
+    o2 = TexMobject("\Rightarrow").scale(0.8)
+    o3 = TextMobject("Exploring the initial square implies exploring all reachable squares").scale(0.8)
+    text = VGroup(o1, o2, o3).arrange(DOWN)
+    self.add(o1)
+    self.wait(3.)
+    self.add(o2)
+    self.wait(5.)
+    self.add(o3)
+    self.wait(5.)
+    self.remove(canv, o1, o2, o3)
+
+  def connected_component(self):
+    self.wait(19.5)
+
+    o1 = TextMobject("Connected component").shift(np.array((3.5, 1., 0.)))
+    self.add(o1)
+    self.wait(6.5)
+    self.remove(o1)
+
+    self.wait(14.)
 
   def construct(self):
     Context.__init__(self)
 
+    self.wait(5.)
     self.animate_maze_construction()
+
+    self.show_text1()
+
     self.animate_adjacency_example()
+
+    self.show_text2()
+
     self.animate_distances()
+
+    self.connected_component()
+    
+    self.wait(27.)
+    #self.reset_full_highlighting()
     self.end_animation(run_time=1.)
 
 class DFSCode(Code):
