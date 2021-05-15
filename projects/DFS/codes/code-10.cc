@@ -14,5 +14,4 @@ void explore(int y, int x) {
     for (int i : {0, 1, 2, 3})
         if (is_explorable[y + dy[i]][x + dx[i])
             explore(y + dy[i], x + dx[i]);
-
 }

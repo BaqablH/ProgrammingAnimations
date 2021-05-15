@@ -4,5 +4,4 @@ void explore(int y, int x) {
         explore(y, x + 1);
     if (is_explorable[y - 1][x])
         explore(y - 1, x);
-
 }

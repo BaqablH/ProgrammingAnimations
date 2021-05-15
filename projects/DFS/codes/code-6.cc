@@ -8,5 +8,4 @@ void explore(int y, int x) {
     for (int i = 0; i < 4; ++i)
         if (is_explorable[y + dy[i]][x + dx[i])
             explore(y + dy[i], x + dx[i]);
-
 }
