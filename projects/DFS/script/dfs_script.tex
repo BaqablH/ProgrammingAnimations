@@ -7,7 +7,7 @@
 \usepackage{graphicx}
 \usepackage{verbatim}
 
-%\renewcommand{\v}[1]{\verb|#1|}
+\renewcommand{\v}[1]{\texttt{#1}}
 
 \author{ProgrammingAnimations}
 \title{DFS Script}
@@ -25,58 +25,70 @@
 
 \section{Video 1. DFS}
 
+ADD SMALL PREVIEW OF THE ALGORITHM
+
 \subsection{Intro/Motivation}
 
-So here's a problem for you.
-Imagine you wake up and you find yourself trapped inside of a maze.
-If this doesn't sound already like a nightmare,
-you don't even know if the maze has an 
-exit, but if there is one, you'd better find and you'd better
-find it quick.
+I'm sure you've been in this situation at some point.
+You wake up a bit disoriented and you find yourself trapped
+inside of a maze.
 
-So, since you don't know exactly where
-you are, you want to explore the maze in such a way
-that you make sure that you explore the entire maze,
-since an exit could be anywhere, but you don't want to
-do unnecessary work. So, we are not looking for a shortest
-path, we will leave that problem for the next video,
-but we want to explore the whole maze without
-wasting any time. Is there a way, or more
-precisely, is there an algorithm that allows you to move
-through the maze in such a way while making sure that
-you will eventually have explored the entire maze?
-Let me introduce you to the depth-first search algorithm,
-or more commonly named just DFS.
+Obviously you don't remember anything about what happened
+last night and you don't have your phone with you.
+
+And to make matters worse
+you REALLY need to go to the toilet. Like NOW.
+
+Basically, you pretty much want to
+escape from the maze as quickly as possible.
+
+So, since you don't know exactly where you are,
+and you don't know how the maze looks like,
+you want to explore it in such a way, that you make sure
+that you can visit every single part of the maze that you
+can go to, since this way you will find an exit for sure,
+but without making any redundant work.
+
+So, is there a way, or more precisely, is there an algorithm
+that allows you to move through the maze in such a way?
+And how would you program a computer to do so?
+Let me introduce you to the Depth-First Search algorithm.
 
 \subsection{Main idea}
 
 Let's try to model the maze in some meaningful way.
-We will represent the maze as a rectangular grid.
-The dark green squares will represent the bushes,
-or more generally, the forbidden positions of the maze. By
-forbidden here we just mean that we cannot walk across
-such squares. The rest of the squares will represent
-the part of the maze along which we can walk.
-Finally, we will represent in blue our starting 
-position, and in yellow the exits. In this case, we will
-only have one.
+We will describe the maze as a rectangular grid.
+Dark green squares will represent bushes,
+or in other words, the forbidden positions of the maze.
+Here, by `forbidden' we just mean that we cannot move across
+such squares.
 
-Now remember what we want here. We want a algorithm that makes
-sure that we move through the entire grid, that at the same time
-avoids repeating moves that we have already done.
+The rest of the squares will represent
+the part of the maze along which we can move.
+We will also represent in blue our starting 
+position, and in yellow the exit.
 
-So, here's the main idea of this algorithm. If we can make sure
-that, for every square of the maze
+So here's what we want. We want an algorithm that makes
+sure that we visit every square reachable from our initial position,
+and that at the same time
+avoids revisiting squares that we have already visited.
+
+Bearing this in mind, we are ready to see the main idea of this algorithm.
+
+But before, take in account that when we say that two squares are adjacent,
+we mean that they completely share a side.
+
+For example, for this particular square, these are 
+its adjacent squares.
+And these are its reachable adjacent squares.
+
+Now, here's the main idea. If we can make sure
+that for every square of the maze
 that we explore, we will also explore all its 
 reachable adjacent squares at some point,
-just by starting in some initial position,
-that will ensure that we will eventually explore all squares
-in the maze that we can go to starting from that initial position.
-
-Before we see why, let's point out that in this context we will
-say that two squares are adjacent if they completely share
-a side. For example, for this particular square, those are 
-its adjacenct squares. 
+this means that just by starting in some initial position,
+that will ensure that we will eventually explore all the squares
+in the maze reachable from that initial position.
 
 So, let's see why this idea works.
 Let's say that we start exploring at this particular square.
@@ -89,45 +101,49 @@ a side, and as you see, none of the unmarked squares
 completely share a side with
 any of the marked ones.
 
-By the way, what we marked here forms what is called
+By the way, the set of squares we marked forms what is called
 a connected component, that is, a maximal
 set of squares such that you can go from any of these to any other.
-Maximal here just means that you cannot find a larger set
+
+'Maximal' here just means that we cannot find a larger set
 of squares containing it that still satisfies this property.
 As you can see, for example, this graph has two connected components.
 
 As a final note on the idea, take in account that we
-are not talking yet about the order in which we will
-explore the squares, we doing this just to show
+are not talking yet about the order in which the algorithm
+will explore the squares.
+
+The animation you just saw only shows
 that our idea will ensure that we visit the entire
-connected component. Having said this, we are ready to see how
+connected component.
+
+Having said this, we are ready to see how
 to code this algorithm.
 
 \subsection{Code}
 
-Let's see how to code this. However, just a small caveat
-first. When we talk about matrices, which we use to represent
-grids such as this one that we are using to model the maze,
-we represent each element, or in our case, each square,
-with two indices. The first one, represents the row.
+Just a small caveat first.
+When we talk about matrices, which we use for instance to represent grids,
+we identify each element, or in our case, each square,
+with two indices. The first one represents the row.
 As this is the vertical component, we will denote it
-with a \verb|y|. The uppermost row will be row 0, the next row
+with a \v{y}. The uppermost row will be row 0, the row below
 will be row 1, and so on. As you can see, contrary to what is
-usual, increasing \verb|y| will be the same as moving downwards.
-Then, the second index, will denote the column, and we will
-denote in with an \verb|x|. In this case, the first
-column will be column 0, the next one column 1, and so on.
-This means that we will use \verb|y|'s before \verb|x|'s,
+usual, increasing \v{y} will be the same as moving downwards.
+Then, the second index, will represent the column, and we will
+denote in with an \v{x}. In this case, the column on the left
+will be column 0, the next one column 1, and so on.
+This means that we will use \v{y}'s before \v{x}'s,
 which is the opposite order as you may be used to, but hey,
 there's a good reason for that.
 
 Having said that, we are ready for the code!
-For this video at least,
+At least for this video,
 I will not assume you have any previous knowledge on programming,
 so I will try my best to explain what is going on here.
-If you know some programming, and you are not used with C++,
-which is the language I will use here, don't worry,
-you will find this very easy to translate to your favourite
+If you know some programming, but you don't know C++,
+which is the language I use here, don't worry,
+you should find it easy to translate to your favourite
 language.
 
 Our code will only consist on a this function \verb|explore|,
@@ -138,7 +154,7 @@ which we will pass that as two integers,
 
 Now, let's tackle the first thing that we want for our
 algorithm, which is that we don't want to do redundant effort.
-For that, we will add these three lines. Let's explain them.
+For that, we will add this line. Let's explain it.
 
 First of all, what is this \verb|is_explorable| thing?
 This will be a matrix with the same dimensions as the grid, and
@@ -170,9 +186,9 @@ is explorable, explorable, explore it. Do the same for the
 one on the left, and finally repeat for the one right below.
 
 As these lines follow an identical structure, we can,
-an a good programmer would say we must,
-put them in a \verb|for| loop. However, for some extra clarity
-in case you don't know C++ I will write this loop this way.
+and a good programmer would say we must,
+merge them inside of a a \verb|for| loop. However, for some extra clarity
+in case you don't know C++, I will write this loop this way.
 
 This \verb|for| loop will mean that we will repeat the last two
 lines
@@ -181,8 +197,8 @@ a value of 0, the second time it will have a value of 1,
 the third time, a value of 2 and in the 
 fourth and last iteration it will have a value of 3.
 In case you are not familiar with programming, bear in mind
-that we always start counting from 0 \footnote{TODO: Attack
-MATLAB `programmers'}
+that we always start counting from 0.\footnote{Might probably add
+an evil MATLAB reference or joke.}
 
 So, what will \verb|dy| and \verb|dx| mean here.
 This will be two small arrays to indicate directions.
@@ -197,15 +213,15 @@ This naming of variables is quite typical
 in this sort of context, and is obviously borrowed from math,
 although of course they are not used to talk about differential
 displacements, as its usual in the field,
-but about minimal displacements.
+but about minimum displacements.
 
 So here we are! This is a basic scheme of a depth-first
-search algorithm. However, for our case, we will one extra thing
+search algorithm. However, for our case, we will need one extra thing
 on top of this basic scheme, which is keeping track of whether
 we found an exit. So, we will
 use this variable \verb|is_exit|, which again will be a matrix
 of booleans with the same dimension as the grid, just as the
-varaible we named \verb|explorable|, which for each square
+variable we named \verb|explorable|, which for each square
 will tell whether it is an exit, and we will use this other
 boolean \verb|found_exit| which will keep track whether we found
 an exit. As we can see, we will initialize it as \verb|false|,
@@ -213,9 +229,9 @@ and if we find an exit, when we do, we will set it to
 \verb|true|.
 
 Finally, since we are happy to find just an exit, these last two
-lines will stop any exploration once we have found
-an exit. Again, if you are not familiar with programming,
-return just means stop the function and go back to whatever
+lines will stop any exploration once we have found one.
+Again, if you are not familiar with programming,
+\verb|return| just means stop the function and go back to whatever
 you were doing when you called it.
 
 And a last small thing, let's add some comments to make
@@ -226,7 +242,7 @@ still be there in the background.
 So let's recap what this code is doing. We first have this
 little line that ensures that we don't do redundant work,
 we have this \verb|for| loop, that tries to explore
-every explorable adjacenct square,
+every explorable adjacent square,
 and we have this four lines, that will ensure that we stop
 once we have found an exit.
 
@@ -237,7 +253,7 @@ Now, let's run the animation!
 (initial square $(2, 4)$). So, we will start in our
 initial square. So, we start marking the square as not
 explorable, and now, let's start exploring around!
-What our algorithm does is first, let's explore east.
+What our algorithm does is: `first, let's explore east'.
 The square at the left is not explorable, since it is an obstacle,
 so we try exploring north. Now our square is explorable!. So,
 let's recursively explore there.
@@ -261,14 +277,14 @@ The square east is already explored, the square north is an
 obstacle, and the square west is explorable, so we will
 first go there.
 
-$(4, 4)$. Now, we get at this square. Our algorithm will tell
+$(4, 4)$. Now, we get to this square. Our algorithm will tell
 us to start exploring north.
 
-$(3, 4)$. But look what we have in this square. Each adjacent
+$(3, 4)$. But look at what we have in this square. Each adjacent
 square is not explorable, either because is an obstacle or
-has already been explored. This means we cannot go move anywhere.
+has already been explored. This means we cannot move anywhere.
 In this case, the function will just end and we will resume
-in the previous step from the state that we left.
+the function from the previous step.
 Note that we have not completed exploring any of the squares
 with arrows. The exploration process on all those squares are
 frozen until we finish exploring the squares that we started
@@ -289,63 +305,86 @@ $(5, 2)$. And now, we will move right into the exit!
 
 (exit $(7, 0)$). We are at the exit now. However, I lied a
 little bit to you. These four lines just do the process of
-exploring the maze, but nothing else.
+exploring the maze, but nothing else.\footnote{There is a bit of conflict on the
+explanation here, since now we are using a different code (see the video).
+This is a minor issue in the script that we will have to solve.}
 
 If we leave the code like this, the algorithm will not stop,
 since we did not tell it to do anything if it explores an
 exit. Even worse, the algorithm will crash, since it will
-try to explore a the square left, which does not 
-exist since it is out of the maze
+try to explore the square left, which does not 
+exist since it is out of the maze.
 
 We may want to do something like this,
 where we say: if the square is an exit, mark that we have found
-an exit, and if we have found an exit, just return,
-%TODO: copypaste
+an exit, and if we have found an exit, just return.
 
 If we don't want the algorithm to stop, we will need
 to make a small modification in the code. Instead of
 checking that the square is explorable,
-we will check first that it is explorable,
-and then that it is inside of the maze, which we can do using
+we will check first that it is inside of the maze,
+and then that it is explorable, which we can do using
 a function like this.
 
-Try to deduce what will the algorithm do in this case. You
-can check if you are right by looking at the plain animation that
-I will leave in the description.
+%Try to deduce what will the algorithm do in this case. You
+%can check if you are right by looking at the plain animation that
+%I will leave in the description.
 
 \subsection{Observations}
+
+Now, look at the algorithm again and pay attention to the arrows. As you can
+see, at any moment in time, if you follow the direction that the arrows point to,
+you will see that they create a path from the initial square to whatever square
+we are exploring at that moment.
+
+Now, pay attention to how this path changes. As you can see, the path only changes
+in two ways. Either we add a new square to the path, or we eliminate the square
+the is the furthest from the beginning. If you are already a programmer with some
+experience, this may sound familiar. The path is behaving as a stack!
+
+If you don't know what stacks are, don't worry, we'll devote a full video in
+this series to explain what they are and how they work, and how we can implement 
+with a few more lines of code an iterative version of the DFS algorithm,
+that is, a DFS that does not
+need recursion. Be sure to check it out, because it will hold the secret
+for the next algorithm, breath-first search, or just BFS.
+
+By the way, if you are still not very familiar with recursion, there's a small
+detail you may want to pay attention. Note that at each step, the $i$'s in each
+square are frozen, all but the one of the square we are exploring. You can find it
+an interesting way to think of recursion: just a function that uses the same function to compute itself, and that is frozen as long as the recursively called function
+has not ended.
+
+% If we have not stored the map and just build it as we find it, it is the same
+% Code things (like adding a return at the beginning, variations...)
 
 \subsection{The stack of DFS}
 
-\subsection{Stacks}
+Finally, we will end this video with a nice little trick about mazes. If
+the maze has no cycles, you can touch the wall of the maze with one hand,
+and just walk along the maze just dragging your hand along the wall without
+separating it.
 
-\subsection{Implementing DFS with a stack}
+If you do that, you will traverse the maze until you will eventually find
+an exit. But, if you don't find it, bad news, your maze has some cycle, and it
+will not be that easy to find an exit. Or, worse news, your maze doesn't have any (reachable) exit
+and you will be trapped forever. But hey, at least thanks to this video you will have found that
+out optimally.
 
-\section{Video 2. BFS}
-
-\subsection{Stacks and queues}
-
-\subsection{Explain Code}
-
-\subsection{Animation}
-
-\subsection{Observations}
-
-\section{Video 3. Dijkstra}
-
-\subsection{Generalizing DFS and BFS to all Graphs}
-
-\subsection{Weighted graphs}
-
-\subsection{Priority Queues}
-
-\subsection{Explain Code}
-
-\subsection{Animation}
-
-\subsection{Observations}
-
-\subsection{Conclusions}
-
+%\subsection{Stacks}
+%\subsection{Implementing DFS with a stack}
+%\section{Video 2. BFS}
+%\subsection{Stacks and queues}
+%\subsection{Explain Code}
+%\subsection{Animation}
+%\subsection{Observations}
+%\section{Video 3. Dijkstra}
+%\subsection{Generalizing DFS and BFS to all Graphs}
+%\subsection{Weighted graphs}
+%\subsection{Priority Queues}
+%\subsection{Explain Code}
+%\subsection{Animation}
+%\subsection{Observations}
+%\subsection{Conclusions}
 
 \end{document}
