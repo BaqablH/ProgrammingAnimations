@@ -324,49 +324,82 @@ class ShowCode(CommonScene):
   def get_col_rectangle(self, j):
     return self.get_rectangle(j, 1, self.matrix_height, np.array((-6.5, 0.16666, 0)), np.array([1, 0, 0]), 'x')
 
-  def animate_rectangles(self, func, iters):
+  def animate_rectangles(self, id, func, iters):
     rect, obj = func(0)
     self.add(rect, obj)
+    self.wait(2.)
 
     for i in range(1, iters):
+      wait_time = 4/3 if i == 1 else 2/3
       new_rect, new_obj = func(i)
       self.play(
         *[Transform(rect, new_rect), Transform(obj, new_obj)],
         skip_animations=True,
-        run_time=0.5
+        run_time=wait_time
       )
-      self.wait(0.5)
+      self.wait(wait_time/2)
 
     self.remove(rect, obj)
-    self.wait(0.5)
   
   def get_code_file(self, i):
     return "codes/code-{}.cc".format(i)
 
+  def transform_code(self, iter, run_time):
+      self.play(
+        Transform(self.code, DFSCode(file_name=self.get_code_file(iter))),
+        skip_animations=True,
+        run_time=run_time
+      )
+
   def animate_codes(self):
     self.code = DFSCode(file_name=self.get_code_file(0))
-    self.add(self.code)
+    self.play(FadeIn(self.code, run_time=2.))
 
-    for i in range(11):
-      self.play(
-        Transform(self.code, DFSCode(file_name=self.get_code_file(i))),
-        skip_animations=True,
-        run_time=0.25
-      )
-      self.wait(1.5)
+    self.wait(22)
+    self.transform_code(1, .5)
 
-    self.highlight_lines(2., {12 : YELLOW})
-    self.highlight_lines(2., {i : YELLOW for i in range(16, 19)})
+    self.wait(63.5)
+    self.transform_code(2, .5)
 
-    self.wait(3.)
+    self.wait(19.5)
+    self.transform_code(3, .5)
+
+    self.wait(2.5)
+    self.transform_code(4, .5)
+
+    self.wait(2.5)
+    self.transform_code(5, .5)
+
+    self.wait(10.5)
+    self.transform_code(6, .5)
+
+    self.wait(5.5)
+    self.transform_code(7, .5)
+
+    self.wait(83.5)
+    self.transform_code(8, .5)
+
+    self.wait(8.)
+    self.highlight_lines(4.5, {6 : YELLOW})
+    self.highlight_lines(6., {i : YELLOW for i in range(9, 12)})
+    self.highlight_lines(0., {})
+
+    self.wait(21.)
 
   def construct(self):
     Context.__init__(self)
 
-    self.start_animation(run_time=0.1)
+    self.start_animation(run_time=1.)
 
-    self.animate_rectangles(self.get_row_rectangle, self.matrix_height)
-    self.animate_rectangles(self.get_col_rectangle, self.matrix_width)
+    self.wait(20.)
+
+    self.animate_rectangles(0, self.get_row_rectangle, self.matrix_height)
+    
+    self.wait(13.)
+    
+    self.animate_rectangles(1, self.get_col_rectangle, self.matrix_width)
+
+    self.wait(26.)
 
     self.animate_codes()
 

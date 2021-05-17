@@ -125,130 +125,168 @@ to code this algorithm.
 Just a small caveat first.
 When we talk about matrices, which we use for instance to represent grids,
 we identify each element, or in our case, each square,
-with two indices. The first one represents the row.
+with two indices.
+
+The first one represents the row.
 As this is the vertical component, we will denote it
 with a \v{y}. The uppermost row will be row 0, the row below
-will be row 1, and so on. As you can see, contrary to what is
+will be row 1, and so on.
+
+As you can see, contrary to what is
 usual, increasing \v{y} will be the same as moving downwards.
+
 Then, the second index, will represent the column, and we will
 denote in with an \v{x}. In this case, the column on the left
 will be column 0, the next one column 1, and so on.
+
 This means that we will use \v{y}'s before \v{x}'s,
 which is the opposite order as you may be used to, but hey,
 there's a good reason for that.
 
 Having said that, we are ready for the code!
-At least for this video,
+For this video,
 I will not assume you have any previous knowledge on programming,
 so I will try my best to explain what is going on here.
+
 If you know some programming, but you don't know C++,
 which is the language I use here, don't worry,
-you should find it easy to translate to your favourite
+you will find it easy to translate the code to your favourite
 language.
 
-Our code will only consist on a this function \verb|explore|,
-which will try to explore a single square. Therefore
-the only parameter that this function needs is the position,
-which we will pass that as two integers, 
-\verb|y| the row, and \verb|x|, the column.
+Our code will start with function named \v{explore},
+which will just try to explore a single square.
 
-Now, let's tackle the first thing that we want for our
-algorithm, which is that we don't want to do redundant effort.
-For that, we will add this line. Let's explain it.
+Therefore
+the only parameter that this function needs is the position,
+which we will pass that as two integers,
+first the row \v{y}, and then the column \v{x}.
+
+Remember that one of the things we wanted was to avoid revisiting
+any previously explored square.
+We can convert this idea into this single
+line of code. Let's explain it.
 
 First of all, what is this \verb|is_explorable| thing?
-This will be a matrix with the same dimensions as the grid, and
-so each element will represent the corresponding square of the
-grid. Each element will be a boolean, that is, a true or a false
+This will be a matrix with the same dimensions as the grid,
+in which each element will represent the corresponding square
+of the grid.
+
+Each of these elements will be a boolean,
+that is, a \v{true} or a \v{false}
 value, to indicate if the square is explorable or not.
 
 To be explorable, a square must satisfy two conditions.
-First, it must be a walkable square. So, squares representing
-bushes are not explorable. And second condition and probably
-the most important, to be explorable, the square cannot
-have been explored it yet.
+First, it must not be an obstacle. Second, and this
+is the most important condition,
+to be explorable, the square can't have been previously
+explored.
 
 So, at the beginning, we will say that all forbidden squares,
 the ones representing the bushes, are not explorable,
-whereas all the other squares will be, but each time
-we explore a square, we mark it as non explorable.
+whereas all the other squares will be.
 
-So, this will be the our first line of code. Every time
+However, every time
 we explore a square, we will immediately mark it as not explorable
-so that we never come back here.
+so that we never explore it again.
 
 Now, we will try to explore the adjacent squares.
-So, we will do the following. If the square at the right is
-explorable, explore it recursively. If you don't know what 
-`recursively' means, don't worry and wait till you see the
-algorithm in action. Then, if the square right above
-is explorable, explorable, explore it. Do the same for the
-one on the left, and finally repeat for the one right below.
+Let's try to explore the one on the right.
+We will do the following. If the square on the right is
+explorable, explore it recursively. A couple simple lines, right?
 
-As these lines follow an identical structure, we can,
+If you don't know what 
+`recursively' means, don't worry and wait till you see the
+algorithm in action.
+
+Let's do the same for the other squares.
+If the square right above
+is explorable, explore it. The same for the
+square on the left, and for the one right below.
+
+As you can see, these lines follow an identical structure,
+and so we can,
 and a good programmer would say we must,
-merge them inside of a a \verb|for| loop. However, for some extra clarity
+merge them inside of a \v{for} loop.
+
+However, for some extra clarity
 in case you don't know C++, I will write this loop this way.
 
-This \verb|for| loop will mean that we will repeat the last two
+This \v{for} loop means that we will repeat the last two
 lines
-of code 4 times, the first time the variable \verb|i| will have
+of code 4 times, the first time the variable \v{i} will have
 a value of 0, the second time it will have a value of 1,
 the third time, a value of 2 and in the 
 fourth and last iteration it will have a value of 3.
+
 In case you are not familiar with programming, bear in mind
 that we always start counting from 0.\footnote{Might probably add
 an evil MATLAB reference or joke.}
 
-So, what will \verb|dy| and \verb|dx| mean here.
+So, what will \v{dy} and \v{dx} mean here.
 This will be two small arrays to indicate directions.
-So, when for example \verb|i| is 0, substituting
-the first values of \verb|dy| and \verb|dx| we will get
-\verb|explore(y, x + 1)|, that is, we will explore
-the position at the right, or east, of our square.
-If you do the same for the other \verb|i|'s, you will realize
+
+For example, when \v{i} is 0, substituting
+the first values of \v{dy} and \v{dx} we will be exploring
+the square with coordinates \v{(y + 0, x + 1)},
+that is, we will be exploring the position at the right
+of our square.
+
+If you do the same for the other \v{i}'s, you will realize
 that we will explore east, north, west, and south, in this order.
 
-This naming of variables is quite typical
+This naming of variables by the way, is quite typical
 in this sort of context, and is obviously borrowed from math,
 although of course they are not used to talk about differential
-displacements, as its usual in the field,
+displacements, as it's usual in the field,
 but about minimum displacements.
 
 So here we are! This is a basic scheme of a depth-first
-search algorithm. However, for our case, we will need one extra thing
-on top of this basic scheme, which is keeping track of whether
-we found an exit. So, we will
-use this variable \verb|is_exit|, which again will be a matrix
-of booleans with the same dimension as the grid, just as the
-variable we named \verb|explorable|, which for each square
-will tell whether it is an exit, and we will use this other
-boolean \verb|found_exit| which will keep track whether we found
-an exit. As we can see, we will initialize it as \verb|false|,
-and if we find an exit, when we do, we will set it to
-\verb|true|.
-
-Finally, since we are happy to find just an exit, these last two
-lines will stop any exploration once we have found one.
-Again, if you are not familiar with programming,
-\verb|return| just means stop the function and go back to whatever
-you were doing when you called it.
-
-And a last small thing, let's add some comments to make
-everything even clearer, and let's get rid of these
-helper variables, although bear in mind that they will
-still be there in the background.
+search algorithm. We will end by adding some comments
+to the code to make things more understandable.
 
 So let's recap what this code is doing. We first have this
 little line that ensures that we don't do redundant work,
-we have this \verb|for| loop, that tries to explore
-every explorable adjacent square,
-and we have this four lines, that will ensure that we stop
-once we have found an exit.
+and then we have this \v{for} loop, that tries to explore
+every explorable adjacent square. Just the two ingredients
+we needed.
+
+Just one extra thing we will need to note here.
+As you can see, this code does nothing special
+when it finds an exit, and does not check that
+the square we want to explore is inside of the maze,
+which can make the program crash.
+
+We will solve this issue later on when we come across it.
+
+And now, let's see the algorithm in action!
+
+
+%However, for our case, we will need one extra thing
+%on top of this basic scheme, which is keeping track of whether
+%we found an exit. So, we will
+%use this variable \verb|is_exit|, which again will be a matrix
+%of booleans with the same dimension as the grid, just as the
+%variable we named \v{explorable}, which for each square
+%will tell whether it is an exit, and we will use this other
+%boolean \verb|found_exit| which will keep track whether we found
+%an exit. As we can see, we will initialize it as \v{false},
+%and if we find an exit, when we do, we will set it to
+%\v{true}.
+%
+%Finally, since we are happy to find just an exit, these last two
+%lines will stop any exploration once we have found one.
+%Again, if you are not familiar with programming,
+%\v{return} just means stop the function and go back to whatever
+%you were doing when you called it.
+%
+%And a last small thing, let's add some comments to make
+%everything even clearer, and let's get rid of these
+%helper variables, although bear in mind that they will
+%still be there in the background.
+%
+
 
 \subsection{Animation}
-
-Now, let's run the animation!
 
 (initial square $(2, 4)$). So, we will start in our
 initial square. So, we start marking the square as not
