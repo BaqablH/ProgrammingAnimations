@@ -98,8 +98,9 @@ class DFSSquare(MODE.BaseDFSSquareClass):
 class Grid(object):
   MAX_MATRIX_SIZE = 7.5
 
-  def __init__(self, **kwargs):
+  def __init__(self, file="matrix.txt", **kwargs):
     self.maze = []
+    self.file = file
     self.matrix = None
     self.matrix_height = None
     self.matrix_width = None
@@ -118,8 +119,8 @@ class Grid(object):
             for y in range(self.matrix_height) 
                 for x in range(self.matrix_width)]
 
-  def load_matrix(self, file="matrix.txt"):
-    with open(file) as matrix:
+  def load_matrix(self):
+    with open(self.file) as matrix:
       self.matrix = matrix.read().splitlines()
     self.matrix_height = len(self.matrix)
     self.matrix_width = len(self.matrix[0])
@@ -563,3 +564,61 @@ class TheAnimation(CommonScene):
 
     self.dfs(*INITIAL_POS)
     self.end_animation(run_time=1.)
+
+
+class RightHandRule(CommonScene):
+
+  def construct(self):
+    Context.__init__(self, file="matrix2.txt")
+
+    self.mark_init_squares()
+    self.mark_exit_squares()
+    self.start_animation(run_time=2.)
+
+    self.wait(6.)
+
+    init_sq = self.get_square(2, 4)
+    pos_ctr = init_sq.get_center()
+    side = init_sq.side_length
+    init_pos = pos_ctr + side/2 * np.array([1, -1, 0])
+
+    arr = [init_pos]
+
+    s = "UULDLULLDRDRRDDLULULDDRDLDLD"
+
+    for c in s:
+      displ_map = {
+        'R' : (1, 0, 0),
+        'U' : (0, 1, 0),
+        'L' : (-1, 0, 0),
+        'D' : (0, -1, 0)
+      }
+      arr.append(arr[-1] + side * np.array(displ_map[c]))
+
+    lines = []
+    prev_lines = []
+
+    for i in range(len(arr) - 1):
+      lines.append(Line(start=arr[i], end=arr[i + 1], stroke_width=12).set_color(RED))
+      line = lines[-1]
+      if i == 0:
+        self.play(FadeIn(line), run_time=1.)
+        self.wait(5.)
+
+      else:
+        wait_time = 2.
+        if i <= 3:
+          wait_time = 1.
+        elif i <= 7:
+          wait_time = .5
+        elif i > 7:
+          wait_time = .33
+        prev_line = copy.deepcopy(lines[-2])
+        prev_lines.append(prev_line)
+        self.play(Transform(prev_line, line), run_time=wait_time)
+        self.wait(wait_time)
+
+    to_remove = self.get_squares() + lines + prev_lines
+    self.play(*[FadeOut(item) for item in to_remove], run_time=3.)
+    self.add(TextMobject("Thanks for watching"))
+    self.wait(3.)

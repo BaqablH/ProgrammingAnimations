@@ -368,44 +368,69 @@ inside of the maze, and if so, would return true if the square is explorable.
 
 \subsection{Observations}
 
-Now, look at the algorithm again and pay attention to the arrows. As you can
-see, at any moment in time, if you follow the direction that the arrows point to,
-you will see that they create a path from the initial square to whatever square
-we are exploring at that moment.
+Now, look at the algorithm again and pay attention to the arrows.
+As you can see, in any moment of time,
+if you follow the direction that the arrows point to,
+you will see that they create a path from the initial
+square to whatever square we are exploring at that moment.
 
-Now, pay attention to how this path changes. As you can see, the path only changes
-in two ways. Either we add a new square to the path, or we eliminate the square
-the is the furthest from the beginning. If you are already a programmer with some
-experience, this may sound familiar. The path is behaving as a stack!
+Note the path only changes in two ways.
+Either we add a new square to the end of the path,
+or we eliminate the last square from the path.
 
-If you don't know what stacks are, don't worry, we'll devote a full video in
-this series to explain what they are and how they work, and how we can implement 
-with a few more lines of code an iterative version of the DFS algorithm,
-that is, a DFS that does not
-need recursion. Be sure to check it out, because it will hold the secret
-for the next algorithm, breath-first search, or just BFS.
+If you are already a programmer with some experience,
+this may sound familiar. The path is behaving as a stack!
 
-By the way, if you are still not very familiar with recursion, there's a small
-detail you may want to pay attention. Note that at each step, the $i$'s in each
-square are frozen, all but the one of the square we are exploring. You can find it
-an interesting way to think of recursion: just a function that uses the same function to compute itself, and that is frozen as long as the recursively called function
-has not ended.
+If you don't know what stacks are, don't worry,
+we'll devote a full video in this series to explain how they work,
+and to see how they hold the key for an iterative version
+of this algorithm.
+
+By the way, if you still feel a bit confused about recursion,
+there's a small detail you may want to pay attention to.
+
+Note that at each step, in all squares with arrows,
+with the exception of the one we are exploring,
+the $i$'s in such squares don't change.
+
+You can see this as an interesting way to think about recursion:
+a function that calls itself, and that is frozen
+while the recursively called function has not ended.
+
+%If you don't know what stacks are, don't worry, we'll devote a full video in
+%this series to explain what they are and how they work, and how we can implement 
+%with a few more lines of code an iterative version of the DFS algorithm,
+%that is, a DFS that does not
+%need recursion. Be sure to check it out, because it will hold the secret
+%for the next algorithm, breath-first search, or just BFS.
+
+%By the way, if you are still not very familiar with recursion, there's a small
+%detail you may want to pay attention. Note that at each step, the $i$'s in each
+%square are frozen, all but the one of the square we are exploring. You can find it
+%an interesting way to think of recursion: just a function that uses the same function to compute itself, and that is frozen as long as the recursively called function
+%has not ended.
 
 % If we have not stored the map and just build it as we find it, it is the same
 % Code things (like adding a return at the beginning, variations...)
 
-\subsection{The stack of DFS}
+\subsection{The right-hand rule}
 
-Finally, we will end this video with a nice little trick about mazes. If
-the maze has no cycles, you can touch the wall of the maze with one hand,
-and just walk along the maze just dragging your hand along the wall without
-separating it.
+Finally, we'll end this video with a nice little trick about
+mazes. If the maze has no cycles, like this one,
+touch the wall of the maze with one hand,
+and walk along the maze while dragging your hand along
+the wall without separating it.
 
-If you do that, you will traverse the maze until you will eventually find
-an exit. But, if you don't find it, bad news, your maze has some cycle, and it
-will not be that easy to find an exit. Or, worse news, your maze doesn't have any (reachable) exit
-and you will be trapped forever. But hey, at least thanks to this video you will have found that
-out optimally.
+If you do that, you will traverse the maze until you
+eventually find an exit. If you don't find it, bad news,
+your maze has some cycle, and it
+will not be that easy to find an exit.
+
+Or, even worse news, your maze doesn't have any (reachable) exit
+and you will be trapped forever.
+
+But hey, at least thanks to this video you will have found
+your tragic fate optimally.
 
 %\subsection{Stacks}
 %\subsection{Implementing DFS with a stack}
