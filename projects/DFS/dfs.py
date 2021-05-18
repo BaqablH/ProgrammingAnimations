@@ -423,7 +423,7 @@ class TheAnimation(CommonScene):
     self.play(
       Transform(square.ctr_obj, square.new_ctr_obj()),
       Rotate(square.arrow, angle=TAU/4),
-      run_time=0.) # TODO
+      run_time=0.5)
 
   def remove_arrow(self, square):
     self.remove(square.arrow, square.ctr_obj)
@@ -431,23 +431,46 @@ class TheAnimation(CommonScene):
     square.ctr_obj = None
 
   def animate_mark_unexplorable(self, y, x):
-    self.highlight_lines(0., {3: GREEN})
+    self.highlight_lines(0., {3: YELLOW})
     self.wait(0.2)
     self.update_square_state(self.get_square(y, x), "VISITING")
     self.wait(0.2)
+
+    if (y, x) == (2, 4): self.wait(9.)
+    if (y, x) == (1, 4): self.wait(8.5)
+
+    if (y, x) == (1, 5): self.wait(2.5)
+    if (y, x) == (1, 6): self.wait(8.)
+    
     self.highlight_lines()
 
-  def animate_is_explorable(self, y, x):
+  def animate_is_explorable(self, y, x, t):
     self.highlight_lines(0., {7: GREEN, 8: YELLOW})
     self.get_square(y, x).set_state_and_update_square("TRUE")
     self.wait(0.25)
+
     self.highlight_lines()
 
-  def animate_is_unexplorable(self, y, x):
+  def animate_is_unexplorable(self, y, x, t):
     self.highlight_lines(0., {7: RED})
     keep_state = self.get_square(y, x).dfs_state
     self.get_square(y, x).set_state_and_update_square("FALSE")
     self.wait(0.25)
+
+    if t == (2, 4, 0): self.wait(3.)
+
+    if t == (1, 6, 0): self.wait(4.)
+    if t == (1, 6, 1): self.wait(6.)
+    if t == (1, 6, 2): self.wait(13.)
+
+    if t == (4, 6, 0): self.wait(3.)
+    if t == (4, 6, 1): self.wait(3.)
+
+    if t in [(3, 4, i) for i in range(4)]: self.wait(2.5)
+
+    if t == (4, 4, 3): self.wait(2.)
+
+
     self.get_square(y, x).set_state_and_update_square(keep_state)
     self.highlight_lines()
 
@@ -456,18 +479,7 @@ class TheAnimation(CommonScene):
         self.create_arrow(self.get_square(y, x))
       else:
         self.rotate_arrow(self.get_square(y, x))
-  """
-    def animate_line_6(self, y, x, i):
-      self.highlight_lines(0., {6: GREY})
 
-      self.highlight_lines()
-
-    def animate_line_7(self, y, x, i):
-      self.highlight_lines(0., {7: GOLD})
-      dy, dx = directions[i]
-      self.dfs(y + dy, x + dx)
-      self.highlight_lines()
-  """
   def dfs(self, y, x):
     self.iter_count += 1
     print("ITERATION:", self.iter_count)
@@ -478,21 +490,56 @@ class TheAnimation(CommonScene):
     #  self.animate_line_23_true(y, x)
     #  return
     #else:
+
+    if (y, x) == (2, 4): self.wait(1.)
+    if (y, x) == (1, 4): self.wait(7.)
+
     self.animate_mark_unexplorable(y, x)
+    
+    if (y, x) == (7, 0):
+      self.rip = True
+      self.wait(15.)
+      self.play(Transform(self.code,
+        DFSCode(file_name="codes/code-alt1.cc")),
+        run_time=1.
+      )
+      self.wait(57.)
+      self.play(Transform(self.code,
+        DFSCode(file_name="codes/code-alt2.cc")),
+        run_time=1.
+      )
+      self.wait(11.)
+    
+    if self.rip:
+      return
+
+    if (y, x) == (4, 6): self.wait(6.)
+    if (y, x) == (4, 4): self.wait(5.)
+    if (y, x) == (5, 2): self.wait(3.)
+    if (y, x) == (1, 3): self.wait(6.)
 
     for i in range(4):
       Y, X = add_displacement(y, x, i)
+      t = (y, x, i)
       self.update_arrow(y, x, i)
-      if (self.get_square(Y, X).dfs_state == "UNVISITED"):
-        self.animate_is_explorable(Y, X)
+      if (self.get_square(Y, X).dfs_state in ["UNVISITED", "EXIT"]):
+        self.animate_is_explorable(Y, X, t)
         self.dfs(Y, X)
       else:
-        self.animate_is_unexplorable(Y, X)
+        self.animate_is_unexplorable(Y, X, t)
+
+      if self.rip:
+        return
+
+      if t == (2, 4, 0): self.wait(1.5)
 
     self.remove_arrow(self.get_square(y, x))
     self.wait(0.2)
 
     self.update_square_state(self.get_square(y, x), "VISITED")
+
+    if (y, x) == (3, 4): self.wait(25.)
+    if (y, x) == (1, 3): self.wait(10.)
 
   def construct(self):
     Context.__init__(self)
@@ -500,12 +547,19 @@ class TheAnimation(CommonScene):
     self.dfs_title = None
     self.code = DFSCode(file_name="codes/code-anim.cc")
     self.iter_count = 0
+    self.rip = False
 
     if MODE == ThreeD:
       self.set_camera_orientation(phi=30*consts.DEGREES, theta=-90*consts.DEGREES, distance=20)
 
     self.animate_make_title()
-    self.start_animation(run_time=5.)
+
+    self.mark_init_squares()
+    self.mark_exit_squares()
+    self.start_animation(run_time=2.)
     self.add(self.code)
+    
+    self.wait(3.)
+
     self.dfs(*INITIAL_POS)
     self.end_animation(run_time=1.)

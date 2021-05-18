@@ -260,71 +260,57 @@ We will solve this issue later on when we come across it.
 
 And now, let's see the algorithm in action!
 
-
-%However, for our case, we will need one extra thing
-%on top of this basic scheme, which is keeping track of whether
-%we found an exit. So, we will
-%use this variable \verb|is_exit|, which again will be a matrix
-%of booleans with the same dimension as the grid, just as the
-%variable we named \v{explorable}, which for each square
-%will tell whether it is an exit, and we will use this other
-%boolean \verb|found_exit| which will keep track whether we found
-%an exit. As we can see, we will initialize it as \v{false},
-%and if we find an exit, when we do, we will set it to
-%\v{true}.
-%
-%Finally, since we are happy to find just an exit, these last two
-%lines will stop any exploration once we have found one.
-%Again, if you are not familiar with programming,
-%\v{return} just means stop the function and go back to whatever
-%you were doing when you called it.
-%
-%And a last small thing, let's add some comments to make
-%everything even clearer, and let's get rid of these
-%helper variables, although bear in mind that they will
-%still be there in the background.
-%
-
-
 \subsection{Animation}
 
-(initial square $(2, 4)$). So, we will start in our
-initial square. So, we start marking the square as not
-explorable, and now, let's start exploring around!
-What our algorithm does is: `first, let's explore east'.
-The square at the left is not explorable, since it is an obstacle,
-so we try exploring north. Now our square is explorable!. So,
-let's recursively explore there.
+(initial square $(2, 4)$). We'll start in our initial square.
+As we will do in every square we explore, we start marking the square as not
+explorable. And now, let's start exploring around!
 
-$(1, 4)$. We are now in this new square,
-which as always we will first mark as no longer explorable.
-Now, we will be able to move recursively to the left,
+Remember, what our algorithm does is: `first, let's explore east'.
+The square at the right is not explorable, since it's an obstacle.
+
+Therefore, we try exploring north. Now, our square is explorable!
+So, let's recursively explore there.
+
+$(1, 4)$. We are now exploring this new square.
+First, we will mark it as no longer explorable.
+
+Now, we will be able to move recursively to the right,
 and one more time. And remember, at each new exploration we
 mark the corresponding square as not explorable.
 
-$(1, 6)$. Now, look what happens at this square. We start
-trying to explore east, we fail since it is an obstacle,
-we try going north, same thing happens, and now, here's
-the interesting part. The square at the east is not an obstacle,
+$(1, 6)$. Now, look at what happens at this square. We start
+trying to explore east and we fail since it's an obstacle.
+We then try going north and same thing happens.
+
+And now, here's
+the interesting part. The square at the left is not an obstacle,
 but in the previous step we marked it as unexplorable. So,
 we can't go there, and we can only advance south.
 
-$(4, 6)$. Let's fast-forward a little bit, and we see that we
-can take two paths. But remember in which order we try to explore.
+Let's fast-forward a little bit.
+
+$(4, 6)$. In this new square, we see that we
+can take two paths. But remember the order we follow.
+
 The square east is already explored, the square north is an
 obstacle, and the square west is explorable, so we will
 first go there.
 
 $(4, 4)$. Now, we get to this square. Our algorithm will tell
-us to start exploring north.
+us to continue exploring north.
 
-$(3, 4)$. But look at what we have in this square. Each adjacent
+$(3, 4)$. But look at what we have now here. Each adjacent
 square is not explorable, either because is an obstacle or
 has already been explored. This means we cannot move anywhere.
-In this case, the function will just end and we will resume
+
+In this case, the function will just end, and we'll resume
 the function from the previous step.
+
 Note that we have not completed exploring any of the squares
-with arrows. The exploration process on all those squares are
+that still have arrows.
+
+The exploration process on each of those squares is
 frozen until we finish exploring the squares that we started
 exploring later in time.
 
@@ -335,34 +321,46 @@ down.
 $(5, 2)$. Now, at this point, we have another intersection,
 and we start moving north.
 
-$(1, 3)$. Here's a dead end, and just as before, the algorithm
+$(1, 3)$. We come across a dead end, and just as before, the algorithm
 will stop exploring the squares and stepping back.
-Remember, we can't move diagonally.
+Remember, we can't move diagonally!
 
-$(5, 2)$. And now, we will move right into the exit!
+$(5, 2)$. And now, we will move straight to the exit!
 
-(exit $(7, 0)$). We are at the exit now. However, I lied a
-little bit to you. These four lines just do the process of
-exploring the maze, but nothing else.\footnote{There is a bit of conflict on the
-explanation here, since now we are using a different code (see the video).
-This is a minor issue in the script that we will have to solve.}
+(exit $(7, 0)$). 
 
-If we leave the code like this, the algorithm will not stop,
-since we did not tell it to do anything if it explores an
-exit. Even worse, the algorithm will crash, since it will
-try to explore the square left, which does not 
-exist since it is out of the maze.
+As we said, the code we have is not meant to do anything special
+when we find an exit. Here are a couple ways to solve this issue.
 
-We may want to do something like this,
-where we say: if the square is an exit, mark that we have found
-an exit, and if we have found an exit, just return.
+For example, if we want to stop when we find an exit
+we can do the following change in the code.
 
-If we don't want the algorithm to stop, we will need
-to make a small modification in the code. Instead of
-checking that the square is explorable,
-we will check first that it is inside of the maze,
-and then that it is explorable, which we can do using
-a function like this.
+This variable \verb|is_exit|, which will be similar to the
+variable \verb|is_explorable|, will tell, for every square,
+and no surprise, if it is an exit or not. 
+
+And this other variable \verb|found_exit|, which we'll use
+to keep track of whether we found an exit, will be initialized
+to \v{false}, and will be set to \v{true} when we find an exit.
+
+Finally, these last two lines will abort any exploration once
+we've found an exit.
+
+Again, if you are not familiar with programming,
+\v{return} just means stop the function and go back to whatever
+you were doing when you called it.
+
+By the way, the reason why we don't simply say something like
+`if the square is an exit, return', is because although we would
+abort the exploration in the exit square, the exploration
+in the squares with arrows would continue as usual.
+
+Another option, in case we wanted to keep exploring the maze,
+would force us to check whether the square
+is inside of the maze, which we could code this way.
+
+This small function would first check if the square we want to explore is
+inside of the maze, and if so, would return true if the square is explorable.
 
 %Try to deduce what will the algorithm do in this case. You
 %can check if you are right by looking at the plain animation that
